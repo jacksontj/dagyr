@@ -21,14 +21,8 @@ def _reload_config_on_update(app, filepath, modify_times):
 
     if filepath not in modify_times or modified != modify_times[filepath]:
         log.debug("config change, reloading config")
-        app.dag_config = _load_config(config_file)
+        app.dag_config = dag_proxy.dag.DagConfig.from_file(config_file)
         modify_times[filepath] = modified
-
-
-def _load_config(filepath):
-    with open('config.yaml', 'r') as fh:
-        cfg = yaml.load(fh)
-        return dag_proxy.dag.DagConfig(cfg)
 
 
 if __name__ == "__main__":
@@ -52,7 +46,7 @@ if __name__ == "__main__":
     scheduler.start()
 
     # load initial config file
-    app.dag_config = _load_config(config_file)
+    app.dag_config = dag_proxy.dag.DagConfig.from_file(config_file)
 
 
     app.listen(8888)

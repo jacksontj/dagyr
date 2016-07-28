@@ -1,2 +1,6 @@
 tornado
 pyyaml
+networkx
+
+# visualization
+matplotlib

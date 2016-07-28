@@ -1,3 +1,4 @@
+import yaml
 import logging
 
 
@@ -49,6 +50,12 @@ class DagConfig(object):
             self.dynamic_dags[dynamic_dag_key] = {}
             for k, dag_config in dynamic_dag_map.iteritems():
                 self.dynamic_dags[dynamic_dag_key][k] = DagNode(dag_config)
+
+    @staticmethod
+    def from_file(filepath):
+        with open(filepath, 'r') as fh:
+            cfg = yaml.load(fh)
+            return DagConfig(cfg)
 
 
 class DagExecutor(object):

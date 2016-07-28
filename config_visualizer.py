@@ -33,12 +33,10 @@ if __name__ == '__main__':
     }
     dagconfig_to_graph(control_g, labels, dag_config.control_dag)
 
-    print control_g
     # TODO: embed into DagConfig (or DAG class internally)
     print nx.algorithms.is_directed_acyclic_graph(control_g)
 
 
-    print 'drawing'
     pos = nx.spring_layout(control_g)
     nx.draw(control_g, pos=pos)
 
@@ -48,5 +46,4 @@ if __name__ == '__main__':
 
     # write out the graph
     plt.savefig('dag.png')
-    plt.show()
-    print 'showed it?'
+    plt.show()  # in case people have the required libraries to make it happen

@@ -1,0 +1,100 @@
+# This is an example config to build from
+
+######################
+#
+#   CONFIG
+#
+######################
+control_dag:  # TODO: better name?
+
+  # this fragment has the effect of setting a "domain DAG name"
+  fragment_func: attribute_match
+  # TODO: use this? Its primarily some metadata to know what the fragment_args are
+  fragment_spec: {}
+  # input args
+  fragment_args:
+    attribute: 'pristine_request.header.Host'
+    # store value somewhere?
+    save_value_as: 'tmp.domain_dag_key'
+    # TODO: also support lookaside in this same namespace
+    values: ['a.com', 'b.com', 'localhost:8888']
+  outlet:
+    true:
+        fragment_func: execute_dynamic_dag  # terrible name... not really dynamic, but part of the config
+        # TODO: use this? Its primarily some metadata to know what the fragment_args are
+        fragment_spec: {}
+        # input args
+        fragment_args:
+          dynamic_dag_namespace: domain
+          dynamic_dag_key: 'pristine_request.header.Host'  # so that it knows which one to use
+
+    false:
+        fragment_func: set_attribute
+        # TODO: use this? Its primarily some metadata to know what the fragment_args are
+        fragment_spec: {}
+        # input args
+        fragment_args:
+            attribute: "state.response.body"
+            value: "not found!"
+        outlet:
+            true:
+                fragment_func: set_attribute
+                # TODO: use this? Its primarily some metadata to know what the fragment_args are
+                fragment_spec: {}
+                # input args
+                fragment_args:
+                    attribute: "state.response.code"
+                    value: 404
+
+
+# mapping of dymamic_dag kind -> {name -> DAG}
+dynamic_dags:
+    domain:
+        'localhost:8888':
+          fragment_func: attribute_match
+          # TODO: use this? Its primarily some metadata to know what the fragment_args are
+          fragment_spec: {}
+          # input args
+          fragment_args:
+            attribute: "pristine_request.path"
+            dymaic_dag_key: 'path'
+            # TODO: also support lookaside in this same namespace
+            values: ['/foo/bar', '/foo',...]
+
+          outlet:
+            # TODO: set the destination
+            true:
+              fragment_func: set_attribute
+              # TODO: use this? Its primarily some metadata to know what the fragment_args are
+              fragment_spec: {}
+              # input args
+              fragment_args:
+                attribute: "state.response.body"
+                value: "found!"
+              outlet:
+                true:
+                    fragment_func: set_attribute
+                    # TODO: use this? Its primarily some metadata to know what the fragment_args are
+                    fragment_spec: {}
+                    # input args
+                    fragment_args:
+                        attribute: "state.response.code"
+                        value: 200
+
+            false:
+              fragment_func: set_attribute
+              # TODO: use this? Its primarily some metadata to know what the fragment_args are
+              fragment_spec: {}
+              # input args
+              fragment_args:
+                attribute: "state.response.body"
+                value: "not found!"
+              outlet:
+                true:
+                    fragment_func: set_attribute
+                    # TODO: use this? Its primarily some metadata to know what the fragment_args are
+                    fragment_spec: {}
+                    # input args
+                    fragment_args:
+                        attribute: "state.response.code"
+                        value: 404

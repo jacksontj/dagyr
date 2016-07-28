@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 class DagNode(object):
     '''A node in the DAG
 
-    A node in the dag
+    A node in the dag-- otherwise known as a Fragment
     '''
     def __init__(self, node_config):
         # TODO: don't point to the whole thing?
@@ -62,19 +62,22 @@ class DagExecutor(object):
         # which node we are executing
         node = self.dag_config.control_dag
         # call the control_dag
-        path = [node]
+        path = []
         while True:
             try:
+                path.append(node)
                 node = node(self.request_state)
                 # TODO: some sort of UUID per transaction to make this log helpful
                 log.debug(node)
-                path.append(node)
             except Exception as e:
                 if self.request_state.next_dag is not None:
                     node = self.dag_config.dynamic_dags[self.request_state.next_dag[0]][self.request_state.next_dag[1]]
                     # TODO: consolidate into a step() method?
                     self.request_state.next_dag = None
                     continue
+                # TODO trace level log with the return etc
+                if not node.children:
+                    break
                 log.error('Error executing DAG %s' % node, exc_info=True)
                 print path
                 break

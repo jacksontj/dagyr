@@ -22,6 +22,9 @@ you can associate DAGs with
     - what to do with invalid return type (how to handle the error)-- abort DAG?
     - support `null` as a valid outlet? (meaning end execution)
     - where does the namespace start (state. or request.)
+        -- change from `state` to `context` and state can be one of the values
+         this way things can access "config" (which they aren't supposed to mutate)
+         to allow for lookaside tables etc.
 
 # notes:
     - fragments can have default values

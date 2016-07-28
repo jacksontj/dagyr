@@ -65,18 +65,20 @@ class DagExecutor(object):
         self.dag_config = dag_config
         self.request_state = request_state
 
+        self.path = []
+
     def __call__(self):
         # which node we are executing
         node = self.dag_config.control_dag
         # call the control_dag
-        path = []
         while True:
             try:
-                path.append(node)
+                self.path.append(node)
                 node = node(self.request_state)
                 # TODO: some sort of UUID per transaction to make this log helpful
                 log.debug(node)
             except Exception as e:
+                # if this DAG points at another one, lets pull that one up and run it
                 if self.request_state.next_dag is not None:
                     node = self.dag_config.dynamic_dags[self.request_state.next_dag[0]][self.request_state.next_dag[1]]
                     # TODO: consolidate into a step() method?
@@ -86,6 +88,5 @@ class DagExecutor(object):
                 if not node.children:
                     break
                 log.error('Error executing DAG %s' % node, exc_info=True)
-                print path
+                print self.path
                 break
-        print 'do the thing!'

@@ -3,3 +3,11 @@
     - what to do with invalid return type (how to handle the error)-- abort DAG?
     - data access layer thingy-- for caching data as trie, etc.
     - comments on nodes
+    - validate DAG on config load
+    - better conversion/visualization/editor tools?
+        -- convert DAG to embedded view (for reading)
+        -- convert DAG to image (with labels etc.)
+
+# Problems/Questions
+    - what options_data should be exposed when executing DAGs like 'dynamic_domain_localhost:8888'
+        should we just have the option data be associated with the hook? or layer it?

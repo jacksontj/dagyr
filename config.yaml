@@ -15,11 +15,12 @@ options_data:
       - a.com
       - b.com
       - localhost:8888
+    valid_paths: ['/foo/bar', '/foo']
     foo:
       type: int
       value: 1234
 
-  # TODO: this won't be used, we should throw a warning/error
+  # TODO: this won't be used, we should throw a warning/error?
   other_control:
     bar: baz
 
@@ -45,8 +46,8 @@ processing_node_types:
         name: 'a readable name'
         info: 'list of values to match against'
         type: list  # TODO: define type of values?
-        # global_option_data
-        option_lookup_location: 'valid_domains'  # actually resolve to `options_data.request_control.valid_domains`
+         # this means that the value you are passed will be a key to lookup in options
+        option_data: true
   2:
     name: 'execute_dynamic_dag'
     info: 'execute another dag'
@@ -95,7 +96,7 @@ dags:
           # TODO: make this match up with the global lookup thingy (might switch with values)
           attribute: 'state.pristine_request.headers.Host'
           # TODO: also support lookaside in this same namespace
-          values: ['a.com', 'b.com', 'localhost:8888']
+          values: 'valid_domains'
         outlet:
           true: 2
           false: 3
@@ -141,7 +142,7 @@ dags:
         type_id: 1
         args:
           attribute: 'state.pristine_request.path'
-          values: ['/foo/bar', '/foo']
+          values: 'valid_paths'
         outlet:
           true: 2
           false: 4

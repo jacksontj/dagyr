@@ -19,3 +19,6 @@ you can associate DAGs with
 
 # notes:
     - fragments can have default values
+
+# some guiding principles
+- "case consistency"

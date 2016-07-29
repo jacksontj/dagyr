@@ -13,7 +13,7 @@ def fragment(ctx, frag_spec, frag_args):
     # to happen once, and ideally we'd resolve all these before marking the
     # config as good-- as it may not link/resolve
     values = None
-    if frag_spec['values'].get('option_data'):
+    if frag_spec['values'].get('is_option_data', False):
         values = ctx.options[frag_args['values']]
     else:
         values = frag_args['values']

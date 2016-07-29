@@ -35,6 +35,7 @@ class DagHandler(tornado.web.RequestHandler):
         # TODO: change to each "hook" ingress/egress
         dag_executor.call_hook('ingress')
 
+        # TODO: run egress DAG
         # TODO: better conversion
         # if the response is set, return it
         if req_state.response != {}:
@@ -45,11 +46,11 @@ class DagHandler(tornado.web.RequestHandler):
         # CONTINUE!!
         http_client = tornado.httpclient.AsyncHTTPClient()
         try:
-            ret = yield http_client.fetch(dag_executor.context.state.get_request())
+            ret = yield http_client.fetch(ctx.state.get_request())
         except tornado.httpclient.HTTPError as e:
             ret = e.response
 
-        dag_executor.context.state.set_response(ret)
+        ctx.state.set_response(ret)
 
         # call egress hook
         dag_executor.call_hook('egress')

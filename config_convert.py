@@ -17,7 +17,7 @@ def convert_processing_nodes_to_dag(node_types, nodes, starting_node):
 
 if __name__ == '__main__':
     base = None
-    with open('TODO_config.yaml') as fh:
+    with open('config.yaml') as fh:
         base = yaml.load(fh)
 
     #print yaml.dump(base, default_flow_style=False)

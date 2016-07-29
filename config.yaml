@@ -48,7 +48,7 @@ processing_node_types:
         info: 'list of values to match against'
         type: list  # TODO: define type of values?
          # this means that the value you are passed will be a key to lookup in options
-        option_data: true
+        is_option_data: true
   2:
     name: 'execute_dynamic_dag'
     info: 'execute another dag'
@@ -88,8 +88,10 @@ processing_node_types:
 # all the DAGs
 dags:
   ingress:
-    set_name: control_dag
     starting_node: 1
+    option_data:
+      foo: bar
+    # THIS is not layered
     processing_nodes:
       1: # node instance
         type_id: 1
@@ -119,7 +121,6 @@ dags:
           attribute: state.response.code
           value: 404
   egress:
-    set_name: egress_dag
     starting_node: 1
     processing_nodes:
       1: # node instance
@@ -131,12 +132,10 @@ dags:
   # TODO: do we even need this?
   # just a router to the correct dynamic domain
   #dynamic_domain:
-  #  set_name: dyanmic_domain_dag_set
   #  starting_node: 255
 
   # per domain
   dynamic_domain_localhost:8888:
-    set_name: dyanmic_domain_dag_set
     starting_node: 1
     processing_nodes:
       1:

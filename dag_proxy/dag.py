@@ -28,6 +28,7 @@ class DagNode(object):
     def __repr__(self):
         return str(self.node_config)
 
+    # TODO: return None if no children
     def __call__(self, state):
         '''Do whatever it is that you do, and return the next node to execute
         '''

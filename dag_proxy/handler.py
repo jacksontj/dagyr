@@ -1,4 +1,3 @@
-import pyinotify
 import yaml
 import logging
 
@@ -27,6 +26,7 @@ class DagHandler(tornado.web.RequestHandler):
             req_state,
         )
         # execute it!
+        # TODO: change to each "hook" ingress/egress
         dag_executor()
 
         # TODO: better conversion
@@ -39,6 +39,9 @@ class DagHandler(tornado.web.RequestHandler):
                 self.set_status(req_state.response['code'])
 
             self.finish()
+
+        # TODO: make downstream request
+        # CONTINUE!!
 
 
     # TODO: make the request defined in request_state

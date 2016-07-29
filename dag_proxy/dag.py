@@ -22,7 +22,9 @@ class DagNode(object):
 
     A node in the dag-- otherwise known as a Fragment
     '''
-    def __init__(self, node_config, node_types):
+    def __init__(self, dag_key, node_id, node_config, node_types):
+        self.dag_key = dag_key
+        self.node_id = node_id
         # TODO: don't point to the whole thing?
         self.node_config = node_config
         self.node_type = node_types[node_config['type_id']]
@@ -38,17 +40,20 @@ class DagNode(object):
             self.children[k] = nodes[child_id]
 
     def __repr__(self):
+        return str((self.dag_key, self.node_id))
         return str(self.node_config)
 
     def __call__(self, state):
         '''Do whatever it is that you do, and return the next node to execute
         if one exists (otherwise return None)
         '''
-        ret = self.node_type.func(state, self.node_type.spec, self.fragment_args)
+        return self.node_type.func(state, self.node_type.spec, self.fragment_args)
+
+    def get_child(self, key):
         if not self.children:
             return None
         else:
-            return self.children[ret]
+            return self.children[key]
 
 
 # TODO rename to dag_proxy_config or something like that, since its actually the whole config
@@ -71,7 +76,7 @@ class DagConfig(object):
             # temp space for the nodes as we need to create them
             dag_nodes = {}
             for node_id, node in dag_meta['processing_nodes'].iteritems():
-                dag_nodes[node_id] = DagNode(node, self.processing_node_types)
+                dag_nodes[node_id] = DagNode(dag_key, node_id, node, self.processing_node_types)
 
             # link the children together
             for n in dag_nodes.itervalues():
@@ -112,22 +117,25 @@ class DagExecutor(object):
         # call the control_dag
         while True:
             try:
-                ret = node(self.context)
+                node_ret = node(self.context)
+                next_node = node.get_child(node_ret)
                 # TODO: change to namedtuple
                 path.append({
-                    'node': node,
-                    'ret': ret,
+                    'node': str(node),
+                    'node_ret': node_ret,
+                    'next_node': str(next_node),
                 })
+
                 # if the node we executed has no children, we need to see if we
                 # should run another DAG, if not then we are all done
-                if ret is None:
+                if next_node is None:
                     if self.context.state.next_dag is not None:
                         node = self.dag_config.dags[self.context.state.next_dag]
                         # TODO: consolidate into a step() method?
                         self.context.state.next_dag = None
                         continue
                     break
-                node = ret
+                node = next_node
                 # TODO: some sort of UUID per transaction to make this log helpful
             except Exception as e:
                 log.error('Error executing DAG %s' % node, exc_info=True)

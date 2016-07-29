@@ -6,6 +6,7 @@ import copy
 
 import conversion
 
+# TODO: name execution_context?? DagExecutionContext? RequestContext?
 class Context(object):
     '''Context available to processing_nodes
     '''

@@ -41,15 +41,15 @@ class DagNode(object):
 
     def __repr__(self):
         return str((self.dag_key, self.node_id))
-        return str(self.node_config)
 
     def __call__(self, state):
-        '''Do whatever it is that you do, and return the next node to execute
-        if one exists (otherwise return None)
+        '''Run the node and return
         '''
         return self.node_type.func(state, self.node_type.spec, self.fragment_args)
 
     def get_child(self, key):
+        '''Return the next node (if there is one)
+        '''
         if not self.children:
             return None
         else:

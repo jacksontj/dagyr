@@ -20,10 +20,15 @@ class DagHandler(tornado.web.RequestHandler):
         '''Create our own DAGRunner, which will point at a dag config
         '''
         req_state = state.RequestState(self.request)
+        ctx = state.Context(
+            {},  # TODO: pointer to options
+            req_state,
+        )
+
         # get an executor
         dag_executor = dag.DagExecutor(
             self.application.dag_config,
-            req_state,
+            ctx,
         )
         # execute it!
         # TODO: change to each "hook" ingress/egress

@@ -13,7 +13,7 @@ control_dag:  # TODO: better name?
   fragment_spec: {}
   # input args
   fragment_args:
-    attribute: 'pristine_request.header.Host'
+    attribute: 'state.pristine_request.header.Host'
     # store value somewhere?
     save_value_as: 'tmp.domain_dag_key'
     # TODO: also support lookaside in this same namespace
@@ -27,7 +27,7 @@ control_dag:  # TODO: better name?
         fragment_args:
           dynamic_dag_namespace: domain
           # TODO: use `tmp.domain_dag_key`
-          dynamic_dag_key: 'pristine_request.header.Host'  # so that it knows which one to use
+          dynamic_dag_key: 'state.pristine_request.header.Host'  # so that it knows which one to use
 
     false:
         fragment_func: set_attribute
@@ -57,7 +57,7 @@ dynamic_dags:
           fragment_spec: {}
           # input args
           fragment_args:
-            attribute: "pristine_request.path"
+            attribute: "state.pristine_request.path"
             # TODO: also support lookaside in this same namespace
             values: ['/foo/bar', '/foo',...]
 

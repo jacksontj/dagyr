@@ -66,9 +66,9 @@ class DagConfig(object):
 class DagExecutor(object):
     '''This object is responsible for stepping a transaction through a DagConfig
     '''
-    def __init__(self, dag_config, request_state):
+    def __init__(self, dag_config, ctx):
         self.dag_config = dag_config
-        self.request_state = request_state
+        self.context = ctx
 
         self.path = []
 
@@ -79,14 +79,14 @@ class DagExecutor(object):
         while True:
             try:
                 self.path.append(node)
-                ret = node(self.request_state)
+                ret = node(self.context)
                 # if the node we executed has no children, we need to see if we
                 # should run another DAG, if not then we are all done
                 if ret is None:
-                    if self.request_state.next_dag is not None:
-                        node = self.dag_config.dynamic_dags[self.request_state.next_dag[0]][self.request_state.next_dag[1]]
+                    if self.context.state.next_dag is not None:
+                        node = self.dag_config.dynamic_dags[self.context.state.next_dag[0]][self.context.state.next_dag[1]]
                         # TODO: consolidate into a step() method?
-                        self.request_state.next_dag = None
+                        self.context.state.next_dag = None
                         continue
                     break
                 node = ret

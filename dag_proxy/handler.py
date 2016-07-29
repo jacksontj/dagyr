@@ -16,6 +16,7 @@ class DagHandler(tornado.web.RequestHandler):
     '''Proxy handler that just executes the DAGs associated to make the request
     '''
 
+    @tornado.gen.coroutine
     def prepare(self):
         '''Create our own DAGRunner, which will point at a dag config
         '''
@@ -37,17 +38,37 @@ class DagHandler(tornado.web.RequestHandler):
         # TODO: better conversion
         # if the response is set, return it
         if req_state.response != {}:
-            if 'body' in req_state.response:
-                self.write(req_state.response['body'])
-
-            if 'code' in req_state.response:
-                self.set_status(req_state.response['code'])
-
-            self.finish()
+            self.serve_state(req_state.response)
+            return
 
         # TODO: make downstream request
         # CONTINUE!!
+        http_client = tornado.httpclient.AsyncHTTPClient()
+        ret = yield http_client.fetch(dag_executor.context.state.get_request())
 
+        dag_executor.context.state.set_response(ret)
+
+        # call egress hook
+        dag_executor.call_hook('egress')
+
+        # set context.state.response as response
+        self.serve_state(req_state.response)
+        return
+
+    def serve_state(self, state):
+        if 'code' in state:
+            self.set_status(state['code'])
+
+        if 'headers' in state:
+            for k, v in state['headers'].iteritems():
+                if k in ('Content-Length',):
+                    continue
+                self.set_header(k, v)
+
+        if 'body' in state:
+            self.write(state['body'])
+
+        self.finish()
 
     # TODO: make the request defined in request_state
     @tornado.gen.coroutine

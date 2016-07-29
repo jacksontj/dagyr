@@ -36,8 +36,8 @@ class TestBasic(tornado.testing.AsyncHTTPTestCase):
             '/',
             headers={'Host': 'localhost:8888'},
         )
-        self.assertEqual(response.code, 404)
-        self.assertEqual(response.body, 'not found!')
+        self.assertEqual(response.code, 200)
+        self.assertEqual(response.headers['Foo'], 'bar')
 
     def test_matching_domain_matching_path(self):
         response = self.fetch(

@@ -93,7 +93,7 @@ dags:
         type_id: 1
         args:
           # TODO: make this match up with the global lookup thingy (might switch with values)
-          attribute: 'state.pristine_request.header.Host'
+          attribute: 'state.pristine_request.headers.Host'
           # TODO: also support lookaside in this same namespace
           values: ['a.com', 'b.com', 'localhost:8888']
         outlet:
@@ -103,7 +103,7 @@ dags:
         type_id: 2
         args:
           dag_prefix: dynamic_domain
-          suffix_key: 'state.pristine_request.header.Host'
+          suffix_key: 'state.pristine_request.headers.Host'
       3:
         type_id: 3
         args:
@@ -116,12 +116,15 @@ dags:
         args:
           attribute: state.response.code
           value: 404
-  #egress:
-  #  set_name: egress_dag
-  #  starting_node: 10
-  #  processing_nodes:
-  #    10: # node instance
-  #      type_id: 2
+  egress:
+    set_name: egress_dag
+    starting_node: 1
+    processing_nodes:
+      1: # node instance
+        type_id: 3
+        args:
+          attribute: 'state.response.headers.foo'
+          value: 'bar'
 
   # TODO: do we even need this?
   # just a router to the correct dynamic domain
@@ -157,12 +160,5 @@ dags:
       4:
         type_id: 3
         args:
-          attribute: "state.response.body"
-          value: "not found!"
-        outlet:
-          true: 5
-      5:
-        type_id: 3
-        args:
-          attribute: "state.response.code"
-          value: 404
+          attribute: "state.request.headers.Host"
+          value: "foo.com"

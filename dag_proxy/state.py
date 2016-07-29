@@ -1,6 +1,7 @@
 '''
 The request/response state that is passed to all fragments
 '''
+import tornado.httpclient
 import copy
 
 class Context(object):
@@ -57,7 +58,7 @@ class RequestState(object):
     '''
     def __init__(self, request):
         self.pristine_request = {
-            'header': dict(request.headers),
+            'headers': dict(request.headers),
             'path': request.path,
         }
         self.request = copy.deepcopy(self.pristine_request)
@@ -68,3 +69,24 @@ class RequestState(object):
         # TODO: move to some other state object?
         # if set, it is (dag_namespace, dag_key)
         self.next_dag = None
+
+    def get_request(self):
+        '''Return tornado.httpclient.HTTPRequest version of `request`
+        '''
+        return tornado.httpclient.HTTPRequest(
+            'http://{host}{path}'.format(
+                host=self.request['headers']['Host'],
+                path=self.request['path'],
+            ),
+            headers=self.request['headers'],
+        )
+
+    def set_response(self, response):
+        if self.pristine_response != {}:
+            raise Exception('Response already set???')
+
+        self.pristine_response = {
+            'headers': dict(response.headers),
+            'body': response.body,  # TODO: stream?
+        }
+        self.response = copy.deepcopy(self.pristine_response)

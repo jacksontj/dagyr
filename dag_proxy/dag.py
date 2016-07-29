@@ -25,8 +25,7 @@ class DagNode(object):
     def __init__(self, dag_key, node_id, node_config, node_types):
         self.dag_key = dag_key
         self.node_id = node_id
-        # TODO: don't point to the whole thing?
-        self.node_config = node_config
+        self.outlets = node_config.get('outlets', {})
         self.node_type = node_types[node_config['type_id']]
 
         # TODO: get these
@@ -36,7 +35,7 @@ class DagNode(object):
         '''called after all nodes are created to link the together
         '''
         self.children = {}
-        for k, child_id in self.node_config.pop('outlet', {}).items():
+        for k, child_id in self.outlets.iteritems():
             self.children[k] = nodes[child_id]
 
     def __repr__(self):
@@ -119,7 +118,7 @@ class DagExecutor(object):
             try:
                 node_ret = node(self.context)
                 next_node = node.get_child(node_ret)
-                # TODO: change to namedtuple
+                # TODO: change to namedtuple?
                 path.append({
                     'node': str(node),
                     'node_ret': node_ret,
@@ -136,7 +135,6 @@ class DagExecutor(object):
                         continue
                     break
                 node = next_node
-                # TODO: some sort of UUID per transaction to make this log helpful
             except Exception as e:
                 log.error('Error executing DAG %s' % node, exc_info=True)
                 break

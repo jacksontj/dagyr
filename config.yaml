@@ -98,7 +98,7 @@ dags:
           attribute: 'state.pristine_request.headers.Host'
           # TODO: also support lookaside in this same namespace
           values: 'valid_domains'
-        outlet:
+        outlets:
           true: 2
           false: 3
       2: # node instance
@@ -111,7 +111,7 @@ dags:
         args:
           attribute: state.response.body
           value: "not found!"
-        outlet:
+        outlets:
           true: 4
       4:
         type_id: 3
@@ -144,7 +144,7 @@ dags:
         args:
           attribute: 'state.pristine_request.path'
           values: 'valid_paths'
-        outlet:
+        outlets:
           true: 2
           false: 4
       2:
@@ -152,7 +152,7 @@ dags:
         args:
           attribute: "state.response.body"
           value: "found!"
-        outlet:
+        outlets:
           true: 3
       3:
         type_id: 3

@@ -44,7 +44,10 @@ class DagHandler(tornado.web.RequestHandler):
         # TODO: make downstream request
         # CONTINUE!!
         http_client = tornado.httpclient.AsyncHTTPClient()
-        ret = yield http_client.fetch(dag_executor.context.state.get_request())
+        try:
+            ret = yield http_client.fetch(dag_executor.context.state.get_request())
+        except tornado.httpclient.HTTPError as e:
+            ret = e.response
 
         dag_executor.context.state.set_response(ret)
 
@@ -53,7 +56,7 @@ class DagHandler(tornado.web.RequestHandler):
 
         # set context.state.response as response
         self.serve_state(req_state.response)
-        return
+        return  # so we don't call other handlers
 
     def serve_state(self, state):
         if 'code' in state:
@@ -69,10 +72,3 @@ class DagHandler(tornado.web.RequestHandler):
             self.write(state['body'])
 
         self.finish()
-
-    # TODO: make the request defined in request_state
-    @tornado.gen.coroutine
-    def get(self):
-        http_client = tornado.httpclient.AsyncHTTPClient()
-        resp = yield http_client.fetch("http://www.google.com/")
-        self.write("Got a %d from origin" % resp.code)

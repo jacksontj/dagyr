@@ -65,6 +65,9 @@ class RequestState(object):
             'headers': dict(request.headers),
             'path': request.path,
         }
+        # TODO: namespace? also want to include options such as
+        # follow redirects, timeouts, etc. (basically transaction overrideable
+        # configuration)
         self.request = copy.deepcopy(self.pristine_request)
 
         self.pristine_response = {}
@@ -90,6 +93,7 @@ class RequestState(object):
             raise Exception('Response already set???')
 
         self.pristine_response = {
+            'code': response.code,
             'headers': dict(response.headers),
             'body': response.body,  # TODO: stream?
         }

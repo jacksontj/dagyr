@@ -3,10 +3,6 @@ The request/response state that is passed to all fragments
 '''
 import copy
 
-
-import tornado.httpclient
-
-
 class Context(object):
     '''Context available to processing_nodes
     '''
@@ -44,7 +40,10 @@ class Context(object):
             except AttributeError:
                 thing = thing[p]
 
-        thing[ident_parts[-1]] = val
+        try:
+            setattr(thing, ident_parts[-1], val)
+        except AttributeError:
+            thing[ident_parts[-1]] = val
 
 
 class RequestState(object):

@@ -32,7 +32,7 @@ class DagHandler(tornado.web.RequestHandler):
         )
         # execute it!
         # TODO: change to each "hook" ingress/egress
-        dag_executor()
+        dag_executor.call_hook('ingress')
 
         # TODO: better conversion
         # if the response is set, return it

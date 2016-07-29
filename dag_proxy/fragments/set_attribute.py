@@ -10,4 +10,6 @@ def fragment(ctx, frag_spec, frag_args):
         ctx.setattr_dotted(frag_args['attribute'], frag_args['value'])
         return True
     except:
+        import logging
+        logging.error('foo', exc_info=True)
         return False

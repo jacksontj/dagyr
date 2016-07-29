@@ -1,100 +1,168 @@
-# This is an example config to build from
+# which DAG for each "hook"
+execution_context:
+  ingress:
+    dag_name: ingress
+    options_data: request_control
 
-######################
-#
-#   CONFIG
-#
-######################
-control_dag:  # TODO: better name?
+  egress:
+    dag_name: egress
+    options_data: request_control
 
-  # this fragment has the effect of setting a "domain DAG name"
-  fragment_func: attribute_match
-  # TODO: use this? Its primarily some metadata to know what the fragment_args are
-  fragment_spec: {}
-  # input args
-  fragment_args:
-    attribute: 'state.pristine_request.header.Host'
-    # store value somewhere?
-    save_value_as: 'tmp.domain_dag_key'
-    # TODO: also support lookaside in this same namespace
-    values: ['a.com', 'b.com', 'localhost:8888']
-  outlet:
-    true:
-        fragment_func: execute_dynamic_dag  # terrible name... not really dynamic, but part of the config
-        # TODO: use this? Its primarily some metadata to know what the fragment_args are
-        fragment_spec: {}
-        # input args
-        fragment_args:
-          dynamic_dag_namespace: domain
-          # TODO: use `tmp.domain_dag_key`
-          dynamic_dag_key: 'state.pristine_request.header.Host'  # so that it knows which one to use
+# space for global options (assuming they'll be re-used a lot)
+options_data:
+  request_control:
+    valid_domains:
+      - a.com
+      - b.com
+      - localhost:8888
+    foo:
+      type: int
+      value: 1234
 
-    false:
-        fragment_func: set_attribute
-        # TODO: use this? Its primarily some metadata to know what the fragment_args are
-        fragment_spec: {}
-        # input args
-        fragment_args:
-            attribute: "state.response.body"
-            value: "not found!"
+  # TODO: this won't be used, we should throw a warning/error
+  other_control:
+    bar: baz
+
+# what types of processing_nodes -- effectively a template
+processing_node_types:
+  1:
+    name: 'attribute_match'
+    info: 'match an attribute against a set of values'
+    info_url: http://someplace.com
+    # this fragment has the effect of setting a "domain DAG name"
+    fragment_func: attribute_match
+    # this is what the args are, and potentially how to resolve them (look it up)
+    fragment_spec:
+      # this is a thing that will be passed a key to lookup the value
+      attribute:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'name of the attribute to match'
+        type: string
+      # this just gets a value-- just use it
+      values:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'list of values to match against'
+        type: list  # TODO: define type of values?
+        # global_option_data
+        option_lookup_location: 'valid_domains'  # actually resolve to `options_data.request_control.valid_domains`
+  2:
+    name: 'execute_dynamic_dag'
+    info: 'execute another dag'
+    fragment_func: execute_dynamic_dag
+    fragment_spec:
+      # this is a thing that will be passed a key to lookup the value
+      dag_prefix:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'string prefix'
+        type: string
+      # this just gets a value-- just use it
+      suffix_key:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'list of values to match against'
+        type: string
+  3:
+    name: 'set_attribute'
+    info: 'set an attribute'
+    fragment_func: set_attribute
+    fragment_spec:
+      # this is a thing that will be passed a key to lookup the value
+      attribute:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'name of the attribute to match'
+        type: string
+      # this just gets a value-- just use it
+      value:
+        # TODO: is this needed? the key is already there...
+        name: 'what to set it to'
+        info: 'what value to set'
+        # TODO: any??
+        #type: string
+
+# all the DAGs
+dags:
+  ingress:
+    set_name: control_dag
+    starting_node: 1
+    processing_nodes:
+      1: # node instance
+        type_id: 1
+        args:
+          # TODO: make this match up with the global lookup thingy (might switch with values)
+          attribute: 'state.pristine_request.header.Host'
+          # TODO: also support lookaside in this same namespace
+          values: ['a.com', 'b.com', 'localhost:8888']
         outlet:
-            true:
-                fragment_func: set_attribute
-                # TODO: use this? Its primarily some metadata to know what the fragment_args are
-                fragment_spec: {}
-                # input args
-                fragment_args:
-                    attribute: "state.response.code"
-                    value: 404
+          true: 2
+          false: 3
+      2: # node instance
+        type_id: 2
+        args:
+          dag_prefix: dynamic_domain
+          suffix_key: 'state.pristine_request.header.Host'
+      3:
+        type_id: 3
+        args:
+          attribute: state.response.body
+          value: "not found!"
+        outlet:
+          true: 4
+      4:
+        type_id: 3
+        args:
+          attribute: state.response.code
+          value: 404
+  #egress:
+  #  set_name: egress_dag
+  #  starting_node: 10
+  #  processing_nodes:
+  #    10: # node instance
+  #      type_id: 2
 
+  # TODO: do we even need this?
+  # just a router to the correct dynamic domain
+  #dynamic_domain:
+  #  set_name: dyanmic_domain_dag_set
+  #  starting_node: 255
 
-# mapping of dymamic_dag kind -> {name -> DAG}
-dynamic_dags:
-    domain:
-        'localhost:8888':
-          fragment_func: attribute_match
-          # TODO: use this? Its primarily some metadata to know what the fragment_args are
-          fragment_spec: {}
-          # input args
-          fragment_args:
-            attribute: "state.pristine_request.path"
-            # TODO: also support lookaside in this same namespace
-            values: ['/foo/bar', '/foo',...]
-
-          outlet:
-            # TODO: set the destination
-            true:
-              fragment_func: set_attribute
-              # TODO: use this? Its primarily some metadata to know what the fragment_args are
-              fragment_spec: {}
-              # input args
-              fragment_args:
-                attribute: "state.response.body"
-                value: "found!"
-              outlet:
-                true:
-                    fragment_func: set_attribute
-                    # TODO: use this? Its primarily some metadata to know what the fragment_args are
-                    fragment_spec: {}
-                    # input args
-                    fragment_args:
-                        attribute: "state.response.code"
-                        value: 200
-
-            false:
-              fragment_func: set_attribute
-              # TODO: use this? Its primarily some metadata to know what the fragment_args are
-              fragment_spec: {}
-              # input args
-              fragment_args:
-                attribute: "state.response.body"
-                value: "not found!"
-              outlet:
-                true:
-                    fragment_func: set_attribute
-                    # TODO: use this? Its primarily some metadata to know what the fragment_args are
-                    fragment_spec: {}
-                    # input args
-                    fragment_args:
-                        attribute: "state.response.code"
-                        value: 404
+  # per domain
+  dynamic_domain_localhost:8888:
+    set_name: dyanmic_domain_dag_set
+    starting_node: 1
+    processing_nodes:
+      1:
+        type_id: 1
+        args:
+          attribute: 'state.pristine_request.path'
+          values: ['/foo/bar', '/foo']
+        outlet:
+          true: 2
+          false: 4
+      2:
+        type_id: 3
+        args:
+          attribute: "state.response.body"
+          value: "found!"
+        outlet:
+          true: 3
+      3:
+        type_id: 3
+        args:
+          attribute: "state.response.code"
+          value: 200
+      4:
+        type_id: 3
+        args:
+          attribute: "state.response.body"
+          value: "not found!"
+        outlet:
+          true: 5
+      5:
+        type_id: 3
+        args:
+          attribute: "state.response.code"
+          value: 404

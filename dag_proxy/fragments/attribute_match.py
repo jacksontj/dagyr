@@ -12,7 +12,12 @@ def fragment(ctx, frag_spec, frag_args):
     # TODO: this expansion really belongs up a few layers-- since it only needs
     # to happen once, and ideally we'd resolve all these before marking the
     # config as good-- as it may not link/resolve
+    values = None
     if frag_spec['values'].get('option_data'):
-        return ctx.getattr_dotted(frag_args['attribute']) in ctx.options[frag_args['values']]
+        values = ctx.options[frag_args['values']]
     else:
-        return ctx.getattr_dotted(frag_args['attribute']) in frag_args['values']
+        values = frag_args['values']
+
+    # convert to a trie (for more scaleable lookups)
+    values_trie = ctx.convert_item('trie', tuple(values))
+    return ctx.getattr_dotted(frag_args['attribute']) in values_trie

@@ -4,9 +4,15 @@ The request/response state that is passed to all fragments
 import tornado.httpclient
 import copy
 
+import conversion
+
 class Context(object):
     '''Context available to processing_nodes
     '''
+    CONVERSION_FUNCS = {
+        'trie': conversion.make_trie,
+    }
+
     def __init__(self, options, state):
         # pointer to the global config
         self.options = options
@@ -16,6 +22,21 @@ class Context(object):
         # TODO: ordereddict (so that hook execution order isn't assumed)
         # hook_name -> path
         self.dag_path = {}
+
+        # cache of data converted to various types
+        # this map will be converted_type -> orig_item -> converted_item
+        self._data_cache = {}
+
+    def convert_item(self, convert_type, orig_item):
+        '''Convert a hashable item `orig_item` to `convert_type`
+        '''
+        if convert_type not in self._data_cache:
+            self._data_cache[convert_type] = {}
+
+        if orig_item not in self._data_cache[convert_type]:
+            self._data_cache[convert_type][orig_item] = self.CONVERSION_FUNCS[convert_type](orig_item)
+
+        return self._data_cache[convert_type][orig_item]
 
     def getattr_dotted(self, ident):
         '''Return the value for something in our namespace given dot notation

@@ -17,11 +17,5 @@ This is a map of namespace -> key -> DAG. The intent here is to allow the user
 to create an arbitrary number of layers (objects that need to be matched) that
 you can associate DAGs with
 
-# TODO/Questions
-    - listen options (certs, ports, etc.) -- setup DAG, run once per config load
-    - what to do with invalid return type (how to handle the error)-- abort DAG?
-    - data access layer thingy-- for caching data as trie, etc.
-    - comments on nodes
-
 # notes:
     - fragments can have default values

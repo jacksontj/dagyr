@@ -1,0 +1,5 @@
+# TODO
+    - listen options (certs, ports, etc.) -- setup DAG, run once per config load
+    - what to do with invalid return type (how to handle the error)-- abort DAG?
+    - data access layer thingy-- for caching data as trie, etc.
+    - comments on nodes

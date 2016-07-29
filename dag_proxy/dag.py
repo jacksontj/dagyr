@@ -51,6 +51,7 @@ class DagNode(object):
             return self.children[ret]
 
 
+# TODO rename to dag_proxy_config or something like that, since its actually the whole config
 # holder of the whole DAG config
 class DagConfig(object):
     '''Holder of the Dags!
@@ -95,22 +96,28 @@ class DagExecutor(object):
         self.dag_config = dag_config
         self.context = ctx
 
-        self.path = []
-
     def call_hook(self, hook_name):
         if hook_name not in self.HOOKS:
             raise RuntimeError('InvalidHook!! {0} not in {1}'.format(hook_name, self.HOOKS))
 
         execution_context = self.dag_config.config['execution_context'][hook_name]
         self.context.options = self.dag_config.config['options_data'][execution_context['options_data']]
-        self._call_dag(self.dag_config.dags[execution_context['dag_name']])
+        self.context.dag_path[hook_name] = []
+        self._call_dag(
+            self.dag_config.dags[execution_context['dag_name']],
+            self.context.dag_path[hook_name],
+        )
 
-    def _call_dag(self, node):
+    def _call_dag(self, node, path=None):
         # call the control_dag
         while True:
             try:
-                self.path.append(node)
                 ret = node(self.context)
+                # TODO: change to namedtuple
+                path.append({
+                    'node': node,
+                    'ret': ret,
+                })
                 # if the node we executed has no children, we need to see if we
                 # should run another DAG, if not then we are all done
                 if ret is None:
@@ -124,5 +131,4 @@ class DagExecutor(object):
                 # TODO: some sort of UUID per transaction to make this log helpful
             except Exception as e:
                 log.error('Error executing DAG %s' % node, exc_info=True)
-                print self.path
                 break

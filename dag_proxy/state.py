@@ -13,6 +13,10 @@ class Context(object):
         self.state = state
         self.tmp = {}
 
+        # TODO: ordereddict (so that hook execution order isn't assumed)
+        # hook_name -> path
+        self.dag_path = {}
+
     def getattr_dotted(self, ident):
         '''Return the value for something in our namespace given dot notation
         '''

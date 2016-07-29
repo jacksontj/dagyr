@@ -28,11 +28,15 @@ class DagNode(object):
     def __repr__(self):
         return str(self.node_config)
 
-    # TODO: return None if no children
     def __call__(self, state):
         '''Do whatever it is that you do, and return the next node to execute
+        if one exists (otherwise return None)
         '''
-        return self.children[self.fragment_func(state, self.fragment_spec, self.fragment_args)]
+        ret = self.fragment_func(state, self.fragment_spec, self.fragment_args)
+        if not self.children:
+            return None
+        else:
+            return self.children[ret]
 
 
 # holder of the whole DAG config
@@ -75,19 +79,19 @@ class DagExecutor(object):
         while True:
             try:
                 self.path.append(node)
-                node = node(self.request_state)
-                # TODO: some sort of UUID per transaction to make this log helpful
-                log.debug(node)
-            except Exception as e:
-                # if this DAG points at another one, lets pull that one up and run it
-                if self.request_state.next_dag is not None:
-                    node = self.dag_config.dynamic_dags[self.request_state.next_dag[0]][self.request_state.next_dag[1]]
-                    # TODO: consolidate into a step() method?
-                    self.request_state.next_dag = None
-                    continue
-                # TODO trace level log with the return etc
-                if not node.children:
+                ret = node(self.request_state)
+                # if the node we executed has no children, we need to see if we
+                # should run another DAG, if not then we are all done
+                if ret is None:
+                    if self.request_state.next_dag is not None:
+                        node = self.dag_config.dynamic_dags[self.request_state.next_dag[0]][self.request_state.next_dag[1]]
+                        # TODO: consolidate into a step() method?
+                        self.request_state.next_dag = None
+                        continue
                     break
+                node = ret
+                # TODO: some sort of UUID per transaction to make this log helpful
+            except Exception as e:
                 log.error('Error executing DAG %s' % node, exc_info=True)
                 print self.path
                 break

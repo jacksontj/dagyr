@@ -26,6 +26,7 @@ control_dag:  # TODO: better name?
         # input args
         fragment_args:
           dynamic_dag_namespace: domain
+          # TODO: use `tmp.domain_dag_key`
           dynamic_dag_key: 'pristine_request.header.Host'  # so that it knows which one to use
 
     false:
@@ -57,7 +58,6 @@ dynamic_dags:
           # input args
           fragment_args:
             attribute: "pristine_request.path"
-            dymaic_dag_key: 'path'
             # TODO: also support lookaside in this same namespace
             values: ['/foo/bar', '/foo',...]
 

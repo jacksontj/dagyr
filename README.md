@@ -24,6 +24,8 @@ you can associate DAGs with
         -- change from `state` to `context` and state can be one of the values
          this way things can access "config" (which they aren't supposed to mutate)
          to allow for lookaside tables etc.
+    - data access layer thingy-- for caching data as trie, etc.
+    - comments on nodes
 
 # notes:
     - fragments can have default values

@@ -1,0 +1,119 @@
+# TODO: convert config.yaml to this
+
+processing_node_types:
+  1:
+    name: 'attribute_match'
+    info: 'match an attribute against a set of values'
+    info_url: http://someplace.com
+    # this fragment has the effect of setting a "domain DAG name"
+    fragment_func: attribute_match
+    # this is what the args are, and potentially how to resolve them (look it up)
+    fragment_spec:
+      # this is a thing that will be passed a key to lookup the value
+      attribute:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'name of the attribute to match'
+        type: string
+      # this just gets a value-- just use it
+      values:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'list of values to match against'
+        type: list  # TODO: define type of values?
+        # global_option_data
+        option_lookup_location: 'valid_domains'  # actually resolve to `options_data.request_control.valid_domains`
+  2:
+    name: 'execute_dag'
+    info: 'execute another dag'
+    fragment_func: execute_dag
+    fragment_spec:
+      # this is a thing that will be passed a key to lookup the value
+      dag_prefix:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'string prefix'
+        type: string
+      # this just gets a value-- just use it
+      suffix_key:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'list of values to match against'
+        type: string
+  3:
+    name: 'set_attribute'
+    info: 'set an attribute'
+    fragment_func: set_attribute
+    fragment_spec:
+      # this is a thing that will be passed a key to lookup the value
+      attribute:
+        # TODO: is this needed? the key is already there...
+        name: 'a readable name'
+        info: 'name of the attribute to match'
+        type: string
+      # this just gets a value-- just use it
+      value:
+        # TODO: is this needed? the key is already there...
+        name: 'what to set it to'
+        info: 'what value to set'
+        # TODO: any??
+        #type: string
+
+# which DAG for each "hook"
+execution_context:
+  ingress:
+    dag_name: ingress
+    options_data: request_control
+
+  egress:
+    dag_name: egress
+    options_data: request_control
+
+# TODO:
+options_data:
+  request_control:
+    valid_domains:
+      - a.com
+      - b.com
+      - localhost:8888
+    foo:
+      type: int
+      value: 1234
+
+  # TODO: this won't be used, we should throw a warning/error
+  other_control:
+    bar: baz
+
+# TODO: lookaside for ingress/egress to not hard-code usage of the namespace
+# all the DAGs
+dags:
+  ingress:
+    set_name: control_dag
+    starting_node: 1
+    processing_nodes:
+      1: # node instance
+        type_id: 1
+        args:
+          # TODO: make this match up with the global lookup thingy (might switch with values)
+          attribute: 'pristine_request.header.Host'
+          # TODO: also support lookaside in this same namespace
+          values: ['a.com', 'b.com', 'localhost:8888']
+       outlet:
+         true: 2
+         false: 3
+  egress:
+    set_name: egress_dag
+    starting_node: 10
+    processing_nodes:
+      10: # node instance
+        type_id: 2
+
+  # just a router to the correct dynamic domain
+  dynamic_domain:
+    set_name: dyanmic_domain_dag_set
+    starting_node: 255
+
+  # per domain
+  dynamic_domain_localhost_8888:
+    set_name: dyanmic_domain_dag_set
+    starting_node: 255

@@ -156,6 +156,7 @@ class DagExecutor(object):
                 # TODO: keep track of DAG name?
                 # TODO: change to namedtuple?
                 path.append({
+                    'dag': str(node.dag_key),
                     'node': str(node),
                     'node_ret': node_ret,
                     'next_node': str(next_node),

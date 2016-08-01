@@ -8,6 +8,7 @@ import fragments
 
 log = logging.getLogger(__name__)
 
+
 class DagNodeType(object):
     '''A node template for the DAG
     '''
@@ -69,6 +70,7 @@ class Dag(object):
     '''Object to represent the whole dag
     '''
     def __init__(self, name, config, processing_node_types=None):
+        self.name = name
         self.option_data = config.get('option_data', {})
         self.nodes = {}
         self.edges = set()
@@ -88,6 +90,29 @@ class Dag(object):
         for n in self.nodes.itervalues():
             n.link_children(self.nodes)
         self.starting_node = self.nodes[config['starting_node']]
+
+    def __call__(self, ctx):
+        node = self.starting_node
+        path = []
+        # call the control_dag
+        while True:
+            node_ret = node(ctx)
+            next_node = node.get_child(node_ret)
+            # TODO: keep track of DAG name?
+            # TODO: change to namedtuple?
+            path.append({
+                'node': str(node),
+                'node_ret': node_ret,
+                'next_node': str(next_node),
+            })
+
+            # if the node we executed has no children, we need to see if we
+            # should run another DAG, if not then we are all done
+            if next_node is None:
+
+                break
+            node = next_node
+        return path
 
 
 # TODO rename to dag_proxy_config or something like that, since its actually the whole config
@@ -140,38 +165,26 @@ class DagExecutor(object):
         dag = self.dag_config.dags[hook_dag_name]
         self.context.options = dag.option_data
         self.context.dag_path[hook_name] = []
-        self._call_dag(
-            dag.starting_node,
-            self.context.dag_path[hook_name],
-        )
 
-    # TODO: change arg to DAG, and have the Dag object handle traversing the nodes?
-    # this way it'll be easier to keep track of the path
-    def _call_dag(self, node, path=None):
-        # call the control_dag
-        while True:
-            try:
-                node_ret = node(self.context)
-                next_node = node.get_child(node_ret)
-                # TODO: keep track of DAG name?
-                # TODO: change to namedtuple?
-                path.append({
-                    'dag': str(node.dag_key),
-                    'node': str(node),
-                    'node_ret': node_ret,
-                    'next_node': str(next_node),
-                })
+        # TODO: ordereddict
+        # map of dag -> path
+        self.dag_path = {}
 
-                # if the node we executed has no children, we need to see if we
-                # should run another DAG, if not then we are all done
-                if next_node is None:
-                    if self.context.state.next_dag is not None:
-                        node = self.dag_config.dags[self.context.state.next_dag].starting_node
-                        # TODO: consolidate into a step() method?
-                        self.context.state.next_dag = None
-                        continue
-                    break
-                node = next_node
-            except Exception as e:
-                log.error('Error executing DAG %s' % node, exc_info=True)
-                break
+        while dag:
+            if dag.name in self.dag_path:
+                log.error("hook execution for {0} looping on dag {1}, path={2}".format(
+                    hook_name,
+                    dag.name,
+                    path=self.dag_path,
+                ))
+                # TODO: better exception?
+                raise Exception()
+            self.dag_path[dag.name] = dag(self.context)
+
+            # set the next DAG to run
+            if self.context.state.next_dag is not None:
+                dag = self.dag_config.dags[self.context.state.next_dag]
+                # TODO: consolidate into a step() method?
+                self.context.state.next_dag = None
+            else:
+                dag = None

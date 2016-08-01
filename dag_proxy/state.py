@@ -20,6 +20,7 @@ class Context(object):
         self.state = state
         self.tmp = {}
 
+        # TODO: make not accessible to fragments?
         # TODO: ordereddict (so that hook execution order isn't assumed)
         # hook_name -> path
         self.dag_path = {}

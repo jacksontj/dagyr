@@ -1,29 +1,11 @@
-# which DAG for each "hook"
-# rename? hook mapping? dag_context? hook_context?
-execution_context:
+# TODO: other metadata? if not then we can just change to hook -> name
+# which DAG to execute for each "hook"
+hook_dag_map:
   ingress:
     dag_name: ingress
-    options_data: request_control
 
   egress:
     dag_name: egress
-    options_data: request_control
-
-# space for global options (assuming they'll be re-used a lot)
-options_data:
-  request_control:
-    valid_domains:
-      - a.com
-      - b.com
-      - localhost:8888
-    valid_paths: ['/foo/bar', '/foo']
-    foo:
-      type: int
-      value: 1234
-
-  # TODO: this won't be used, we should throw a warning/error?
-  other_control:
-    bar: baz
 
 # what types of processing_nodes -- effectively a template
 processing_node_types:
@@ -85,12 +67,20 @@ processing_node_types:
         # TODO: any??
         #type: string
 
+# TODO: add options for max_depth, etc. for DAG validation and execution
 # all the DAGs
 dags:
   ingress:
     starting_node: 1
     option_data:
-      foo: bar
+      valid_domains:
+        - a.com
+        - b.com
+        - localhost:8888
+      valid_paths: ['/foo/bar', '/foo']
+      foo:
+        type: int
+        value: 1234
     # THIS is not layered
     processing_nodes:
       1: # node instance
@@ -128,11 +118,6 @@ dags:
         args:
           attribute: 'state.response.headers.foo'
           value: 'bar'
-
-  # TODO: do we even need this?
-  # just a router to the correct dynamic domain
-  #dynamic_domain:
-  #  starting_node: 255
 
   # per domain
   dynamic_domain_localhost:8888:

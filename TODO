@@ -7,15 +7,4 @@
     - better conversion/visualization/editor tools?
         -- convert DAG to embedded view (for reading)
         -- convert DAG to image (with labels etc.)
-
-# Problems/Questions
-    - what options_data should be exposed when executing DAGs like 'dynamic_domain_localhost:8888'
-        should we just have the option data be associated with the hook? or layer it?
-
-# refactor TODO
-    - change "execution_context" to "hook_dag_map" and move the "options_data"
-        to the DAG we specifically want each dag to have a concrete
-        "options_data", so that when you hit the same node it always has the
-        same args etc.
-
-        TLDR; we want this for "case consistency"
+    - transaction_overrideable configuration

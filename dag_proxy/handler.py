@@ -32,7 +32,6 @@ class DagHandler(tornado.web.RequestHandler):
             ctx,
         )
         # execute it!
-        # TODO: change to each "hook" ingress/egress
         dag_executor.call_hook('ingress')
 
         # TODO: run egress DAG
@@ -42,8 +41,7 @@ class DagHandler(tornado.web.RequestHandler):
             self.serve_state(req_state.response)
             return
 
-        # TODO: make downstream request
-        # CONTINUE!!
+        # make downstream request
         http_client = tornado.httpclient.AsyncHTTPClient()
         try:
             ret = yield http_client.fetch(ctx.state.get_request())

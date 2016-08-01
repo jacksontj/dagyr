@@ -4,3 +4,6 @@ networkx
 
 # visualization
 matplotlib
+
+# data conversion types
+pytrie

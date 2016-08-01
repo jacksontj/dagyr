@@ -23,6 +23,7 @@ def _reload_config_on_update(app, filepath, modify_times):
         log.debug("config change, reloading config")
         app.dag_config = dag_proxy.dag.DagConfig.from_file(config_file)
         modify_times[filepath] = modified
+        log.info("Successfully loaded new config from {0}".format(filepath))
 
 
 if __name__ == "__main__":

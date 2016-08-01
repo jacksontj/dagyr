@@ -65,6 +65,18 @@ class DagNode(object):
             return self.children[key]
 
 
+def is_acyclic(path, node):
+    '''Check that all given paths from node (given path) are acyclic
+    '''
+    ret = True
+    if node in path:
+        return False
+    path.append(node)
+    for child in node.children.itervalues():
+        ret &= is_acyclic(path, child)
+    return ret
+
+
 # TODO: validation methods
 class Dag(object):
     '''Object to represent the whole dag
@@ -73,7 +85,6 @@ class Dag(object):
         self.name = name
         self.option_data = config.get('option_data', {})
         self.nodes = {}
-        self.edges = set()
 
         # temp space for the nodes as we need to create them
         for node_id, node in config['processing_nodes'].iteritems():
@@ -83,13 +94,14 @@ class Dag(object):
                 node,
                 processing_node_types,
             )
-            # TODO: populate edges, ensure no loops?
-            #print node_id, self.nodes[node_id].outlets.values()
 
         # link the children together
         for n in self.nodes.itervalues():
             n.link_children(self.nodes)
         self.starting_node = self.nodes[config['starting_node']]
+
+        if not is_acyclic([], self.starting_node):
+            raise Exception("configured DAG {0} is cyclic!!!".format(name))
 
     def __call__(self, ctx):
         node = self.starting_node
@@ -98,7 +110,6 @@ class Dag(object):
         while True:
             node_ret = node(ctx)
             next_node = node.get_child(node_ret)
-            # TODO: keep track of DAG name?
             # TODO: change to namedtuple?
             path.append({
                 'node': str(node),

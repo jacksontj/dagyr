@@ -11,6 +11,7 @@ hook_dag_map:
 # map of namespace -> option_data
 # these are attached to hooks in the `hook_dag_map` and passed to a DAG
 # during execution
+# TODO: change to global_option_data
 option_data:
   ingress:
     valid_domains:
@@ -28,6 +29,7 @@ processing_node_types:
     # this node_type has the effect of setting a "domain DAG name"
     func: attribute_match
     # this is what the args are, and potentially how to resolve them (look it up)
+    # TODO: rename arg_spec
     spec:
       # this is a thing that will be passed a key to lookup the value
       attribute:
@@ -41,8 +43,16 @@ processing_node_types:
         name: 'a readable name'
         info: 'list of values to match against'
         type: list  # TODO: define type of values?
-         # this means that the value you are passed will be a key to lookup in options
+        # TODO: key for all possible options, NOT a place to get the values from
+        # for the node instance-- they live in the node instance as "args".
+        # this means that the value you are passed will be a key to lookup in options
+        global_options_data_key: valid_domains
+
         is_option_data: true
+      params:
+        name: params
+        type: list of strings
+
   2:
     name: 'execute_dynamic_dag'
     info: 'execute another dag'
@@ -93,6 +103,9 @@ dags:
           attribute: 'state.pristine_request.headers.Host'
           # TODO: also support lookaside in this same namespace
           values: 'valid_domains'
+          params:
+           - a
+           - b
         outlets:
           true: 2
           false: 3

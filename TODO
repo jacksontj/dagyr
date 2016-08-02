@@ -9,3 +9,6 @@
     - multi-tier proxy configuration
         -- stack of actions in headers (to cfg inconsistencies across the tiers)
         -- how to define a proxy topology and route through it?
+
+    - Re-add frag_arg_spec to processing_node modules
+    - change "is_option_data" -> option_data (where it is either the list (or a pointer to the list) of possible values)

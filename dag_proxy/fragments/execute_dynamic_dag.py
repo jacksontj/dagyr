@@ -10,4 +10,4 @@ def fragment(context, frag_spec, frag_args):
         frag_args['dag_prefix'],
         context.getattr_dotted(frag_args['suffix_key']),
     )
-    context.setattr_dotted('state.next_dag', key)
+    context.setattr_dotted('next_dag', key)

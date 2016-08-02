@@ -23,6 +23,9 @@ class Context(object):
         self.state = state
         self.tmp = {}
 
+        # next DAG to run, if we have set one
+        self.next_dag = None
+
     def getattr_dotted(self, ident):
         '''Return the value for something in our namespace given dot notation
         '''
@@ -77,10 +80,6 @@ class RequestState(object):
 
         self.pristine_response = {}
         self.response = {}
-
-        # TODO: move to some other state object?
-        # if set, it is (dag_namespace, dag_key)
-        self.next_dag = None
 
     def get_request(self):
         '''Return tornado.httpclient.HTTPRequest version of `request`

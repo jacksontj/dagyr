@@ -224,9 +224,9 @@ class DagExecutor(object):
             self.dag_path_map[dag.name] = node_path
 
             # set the next DAG to run
-            if self.context.state.next_dag is not None:
-                dag = self.dag_config.dags[self.context.state.next_dag]
+            if self.context.next_dag is not None:
+                dag = self.dag_config.dags[self.context.next_dag]
                 # TODO: consolidate into a step() method?
-                self.context.state.next_dag = None
+                self.context.next_dag = None
             else:
                 dag = None

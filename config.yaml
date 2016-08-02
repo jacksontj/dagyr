@@ -25,10 +25,10 @@ processing_node_types:
     name: 'attribute_match'
     info: 'match an attribute against a set of values'
     info_url: http://someplace.com
-    # this fragment has the effect of setting a "domain DAG name"
-    fragment_func: attribute_match
+    # this node_type has the effect of setting a "domain DAG name"
+    func: attribute_match
     # this is what the args are, and potentially how to resolve them (look it up)
-    fragment_spec:
+    spec:
       # this is a thing that will be passed a key to lookup the value
       attribute:
         # TODO: is this needed? the key is already there...
@@ -46,8 +46,8 @@ processing_node_types:
   2:
     name: 'execute_dynamic_dag'
     info: 'execute another dag'
-    fragment_func: execute_dynamic_dag
-    fragment_spec:
+    func: execute_dynamic_dag
+    spec:
       # this is a thing that will be passed a key to lookup the value
       dag_prefix:
         # TODO: is this needed? the key is already there...
@@ -63,8 +63,8 @@ processing_node_types:
   3:
     name: 'set_attribute'
     info: 'set an attribute'
-    fragment_func: set_attribute
-    fragment_spec:
+    func: set_attribute
+    spec:
       # this is a thing that will be passed a key to lookup the value
       attribute:
         # TODO: is this needed? the key is already there...

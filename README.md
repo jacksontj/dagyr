@@ -18,7 +18,7 @@ to create an arbitrary number of layers (objects that need to be matched) that
 you can associate DAGs with
 
 # notes:
-    - fragments can have default values
+    - nodes can have default values
 
 # some guiding principles
 - "case consistency"

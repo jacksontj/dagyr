@@ -1,7 +1,7 @@
 
 
-def fragment(context, frag_args):
-    '''A fragment
+def processing_node(context, frag_args):
+    '''A processing_node
     context: object that encapsulates request, response, pristine versions, and some temp space
     frag_args: arguments
     '''

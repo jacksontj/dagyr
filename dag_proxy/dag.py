@@ -5,7 +5,7 @@ import logging
 
 import state
 import conversion
-import fragments
+import processing_nodes
 
 
 log = logging.getLogger(__name__)
@@ -17,14 +17,14 @@ class DagNodeType(object):
     def __init__(self, node_type_config):
         self.node_type_config = node_type_config
 
-        self.func = getattr(fragments, node_type_config['fragment_func']).fragment
-        self.spec = node_type_config['fragment_spec']
+        self.func = getattr(processing_nodes, node_type_config['func']).processing_node
+        self.spec = node_type_config['spec']
 
 
 class DagNode(object):
     '''A node in the DAG
 
-    A node in the dag-- otherwise known as a Fragment
+    A node in the dag-- otherwise known as a processing_node
     '''
     def __init__(self, dag_key, node_id, node_config, node_types):
         self.dag_key = dag_key
@@ -32,7 +32,7 @@ class DagNode(object):
         self.outlets = node_config.get('outlets', {})
         self.node_type = node_types[node_config['type_id']]
 
-        self.fragment_args = node_config['args']
+        self.args = node_config['args']
 
 
     def link_children(self, nodes):
@@ -52,10 +52,10 @@ class DagNode(object):
         # If is_option_data, we could do this on config load, but since we allow
         # the option_data to change on a per-hook basis we have to do this at runtime
         # since we aren't sure which set of option_data we have
-        args = copy.deepcopy(self.fragment_args)
+        args = copy.deepcopy(self.args)
         for argname, spec in self.node_type.spec.iteritems():
             if spec.get('is_option_data', False):
-                args[argname] = context.options[self.fragment_args[argname]]
+                args[argname] = context.options[self.args[argname]]
 
 
         # TODO: validate types etc. from the node_type.spec

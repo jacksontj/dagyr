@@ -11,7 +11,7 @@ import dag_proxy.dag
 
 def dagconfig_to_graph(g, labels, node):
     g.add_node(node)
-    labels['nodes'][node] = (node.node_config['fragment_func'], node.fragment_args)
+    labels['nodes'][node] = (node.node_config['func'], node.args)
 
     # add all my children + edges + recurse
     for key, child in node.children.iteritems():

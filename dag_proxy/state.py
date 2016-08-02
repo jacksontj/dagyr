@@ -1,6 +1,3 @@
-'''
-The request/response state that is passed to all fragments
-'''
 import tornado.httpclient
 import copy
 

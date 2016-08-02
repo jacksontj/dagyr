@@ -52,6 +52,8 @@ class DagNode(object):
         # If is_option_data, we could do this on config load, but since we allow
         # the option_data to change on a per-hook basis we have to do this at runtime
         # since we aren't sure which set of option_data we have
+        # if not, then we could potentially split the transaction context from the
+        # hook context to do this in a pre-processing manner
         args = copy.deepcopy(self.args)
         for argname, spec in self.node_type.spec.iteritems():
             if spec.get('is_option_data', False):

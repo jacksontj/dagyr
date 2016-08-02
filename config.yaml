@@ -72,6 +72,8 @@ processing_node_types:
 dags:
   ingress:
     starting_node: 1
+    # this should be "option_data" in the "hook_dag_map", so that its
+    # basically a set of "args" to the dag
     option_data:
       valid_domains:
         - a.com

@@ -49,14 +49,18 @@ class DagNode(object):
         '''Run the node and return
         '''
         # TODO: more efficient?
-        # If is_option_data, we need to do the lookup at execution time
-        # since the value could be something on the transaction -- which
-        # means we can't resolve it at init time.
+        # If is_option_data, we could do this on config load, but since we allow
+        # the option_data to change on a per-hook basis we have to do this at runtime
+        # since we aren't sure which set of option_data we have
         args = copy.deepcopy(self.fragment_args)
         for argname, spec in self.node_type.spec.iteritems():
             if spec.get('is_option_data', False):
                 args[argname] = context.options[self.fragment_args[argname]]
-        return self.node_type.func(context, self.node_type.spec, args)
+
+
+        # TODO: validate types etc. from the node_type.spec
+
+        return self.node_type.func(context, args)
 
     def get_child(self, key):
         '''Return the next node (if there is one)

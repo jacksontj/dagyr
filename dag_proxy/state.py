@@ -99,9 +99,15 @@ class RequestState(object):
         if self.pristine_response != {}:
             raise Exception('Response already set???')
 
-        self.pristine_response = {
-            'code': response.code,
-            'headers': dict(response.headers),
-            'body': response.body,  # TODO: stream?
-        }
+        if isinstance(response, dict):
+            # TODO: enforce a schema!
+            if 'headers' not in response:
+                response['headers'] = {}
+            self.pristine_response = response
+        else:
+            self.pristine_response = {
+                'code': response.code,
+                'headers': dict(response.headers),
+                'body': response.body,  # TODO: stream?
+            }
         self.response = copy.deepcopy(self.pristine_response)

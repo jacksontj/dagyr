@@ -30,10 +30,12 @@ class DagHandler(tornado.web.RequestHandler):
         # execute it!
         dag_executor.call_hook('ingress')
 
-        # TODO: run egress DAG
-        # TODO: better conversion
-        # if the response is set, return it
+        # if the response is set-- then we need to set the state, run the egress
+        # DAG, and serve the response
         if req_state.response != {}:
+            req_state.set_response(req_state.response)
+            # call egress hook
+            dag_executor.call_hook('egress')
             self.serve_state(req_state.response)
             return
 

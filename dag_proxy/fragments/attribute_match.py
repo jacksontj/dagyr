@@ -1,9 +1,8 @@
 
 
-def fragment(context, frag_spec, frag_args):
+def fragment(context, frag_args):
     '''A fragment
     context: object that encapsulates request, response, pristine versions, and some temp space
-    frag_spec: some metadata that defines what the frag_args might be (lookasides, types, etc.)
     frag_args: arguments
     '''
     # TODO: global cache of converted datastructures (trie etc.)

@@ -3,9 +3,21 @@
 hook_dag_map:
   ingress:
     dag_name: ingress
+    option_data_key: ingress
 
   egress:
     dag_name: egress
+
+# map of namespace -> option_data
+# these are attached to hooks in the `hook_dag_map` and passed to a DAG
+# during execution
+option_data:
+  ingress:
+    valid_domains:
+      - a.com
+      - b.com
+      - localhost:8888
+    valid_paths: ['/foo/bar', '/foo']
 
 # what types of processing_nodes -- effectively a template
 processing_node_types:
@@ -72,17 +84,6 @@ processing_node_types:
 dags:
   ingress:
     starting_node: 1
-    # this should be "option_data" in the "hook_dag_map", so that its
-    # basically a set of "args" to the dag
-    option_data:
-      valid_domains:
-        - a.com
-        - b.com
-        - localhost:8888
-      valid_paths: ['/foo/bar', '/foo']
-      foo:
-        type: int
-        value: 1234
     # THIS is not layered
     processing_nodes:
       1: # node instance

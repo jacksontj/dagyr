@@ -6,8 +6,8 @@ import tornado.web
 import tornado.gen
 import tornado.httpclient
 
-import dag
 import state
+import dag
 
 log = logging.getLogger(__name__)
 
@@ -21,15 +21,11 @@ class DagHandler(tornado.web.RequestHandler):
         '''Create our own DAGRunner, which will point at a dag config
         '''
         req_state = state.RequestState(self.request)
-        ctx = state.Context(
-            {},  # TODO: pointer to options
-            req_state,
-        )
 
         # get an executor
         dag_executor = dag.DagExecutor(
             self.application.dag_config,
-            ctx,
+            req_state,
         )
         # execute it!
         dag_executor.call_hook('ingress')
@@ -44,30 +40,30 @@ class DagHandler(tornado.web.RequestHandler):
         # make downstream request
         http_client = tornado.httpclient.AsyncHTTPClient()
         try:
-            ret = yield http_client.fetch(ctx.state.get_request())
+            ret = yield http_client.fetch(req_state.get_request())
         except tornado.httpclient.HTTPError as e:
             ret = e.response
 
-        ctx.state.set_response(ret)
+        req_state.set_response(ret)
 
         # call egress hook
         dag_executor.call_hook('egress')
 
-        # set context.state.response as response
+        # set state.response as response
         self.serve_state(req_state.response)
         return  # so we don't call other handlers
 
-    def serve_state(self, state):
-        if 'code' in state:
-            self.set_status(state['code'])
+    def serve_state(self, req_state):
+        if 'code' in req_state:
+            self.set_status(req_state['code'])
 
-        if 'headers' in state:
-            for k, v in state['headers'].iteritems():
+        if 'headers' in req_state:
+            for k, v in req_state['headers'].iteritems():
                 if k in ('Content-Length',):
                     continue
                 self.set_header(k, v)
 
-        if 'body' in state:
-            self.write(state['body'])
+        if 'body' in req_state:
+            self.write(req_state['body'])
 
         self.finish()

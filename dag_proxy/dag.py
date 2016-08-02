@@ -3,6 +3,8 @@ import yaml
 import logging
 
 
+import state
+import conversion
 import fragments
 
 
@@ -43,7 +45,7 @@ class DagNode(object):
     def __repr__(self):
         return str((self.dag_key, self.node_id))
 
-    def __call__(self, ctx):
+    def __call__(self, context):
         '''Run the node and return
         '''
         # TODO: more efficient?
@@ -53,8 +55,8 @@ class DagNode(object):
         args = copy.deepcopy(self.fragment_args)
         for argname, spec in self.node_type.spec.iteritems():
             if spec.get('is_option_data', False):
-                args[argname] = ctx.options[self.fragment_args[argname]]
-        return self.node_type.func(ctx, self.node_type.spec, args)
+                args[argname] = context.options[self.fragment_args[argname]]
+        return self.node_type.func(context, self.node_type.spec, args)
 
     def get_child(self, key):
         '''Return the next node (if there is one)
@@ -103,12 +105,12 @@ class Dag(object):
         if not is_acyclic([], self.starting_node):
             raise Exception("configured DAG {0} is cyclic!!!".format(name))
 
-    def __call__(self, ctx):
+    def __call__(self, context):
         node = self.starting_node
         path = []
         # call the control_dag
         while True:
-            node_ret = node(ctx)
+            node_ret = node(context)
             next_node = node.get_child(node_ret)
             # TODO: change to namedtuple?
             path.append({
@@ -134,6 +136,9 @@ class DagConfig(object):
         namespace -> name -> DAG
     for all the dynamic_dags
     '''
+    CONVERSION_FUNCS = {
+        'trie': conversion.make_trie,
+    }
     def __init__(self, config):
         self.config = config
 
@@ -149,6 +154,22 @@ class DagConfig(object):
                 processing_node_types=self.processing_node_types,
             )
 
+        # will access the same data
+        # cache of data converted to various types
+        # this map will be converted_type -> orig_item -> converted_item
+        self._data_cache = {}
+
+    def convert_item(self, convert_type, orig_item):
+        '''Convert a hashable item `orig_item` to `convert_type`
+        '''
+        if convert_type not in self._data_cache:
+            self._data_cache[convert_type] = {}
+
+        if orig_item not in self._data_cache[convert_type]:
+            self._data_cache[convert_type][orig_item] = self.CONVERSION_FUNCS[convert_type](orig_item)
+
+        return self._data_cache[convert_type][orig_item]
+
     @staticmethod
     def from_file(filepath):
         with open(filepath, 'r') as fh:
@@ -163,26 +184,34 @@ class DagExecutor(object):
         'ingress',
         'egress',
     )
-    def __init__(self, dag_config, ctx):
+    def __init__(self, dag_config, req_state):
         self.dag_config = dag_config
-        self.context = ctx
+
+        self.context = state.Context(
+            dag_config,
+            req_state,
+        )
 
     def call_hook(self, hook_name):
         if hook_name not in self.HOOKS:
             raise RuntimeError('InvalidHook!! {0} not in {1}'.format(hook_name, self.HOOKS))
 
         # name of the dag to run for the given hook
-        hook_dag_name = self.dag_config.config['hook_dag_map'][hook_name]['dag_name']
-        dag = self.dag_config.dags[hook_dag_name]
-        self.context.options = dag.option_data
-        self.context.dag_path[hook_name] = []
+        hook_meta = self.dag_config.config['hook_dag_map'][hook_name]
+        dag = self.dag_config.dags[hook_meta['dag_name']]
+        if 'option_data_key' in hook_meta:
+            self.context.options = self.dag_config.config['option_data'][hook_meta['option_data_key']]
+        else:
+            self.context.options = {}
 
-        # TODO: ordereddict
+        # TODO: ordereddict?
+        # list of tuple (dag, (node, node, ...))
+        self.dag_path = []
         # map of dag -> path
-        self.dag_path = {}
+        self.dag_path_map = {}
 
         while dag:
-            if dag.name in self.dag_path:
+            if dag.name in self.dag_path_map:
                 log.error("hook execution for {0} looping on dag {1}, path={2}".format(
                     hook_name,
                     dag.name,
@@ -190,7 +219,9 @@ class DagExecutor(object):
                 ))
                 # TODO: better exception?
                 raise Exception()
-            self.dag_path[dag.name] = dag(self.context)
+            node_path = dag(self.context)
+            self.dag_path.append((dag.name, node_path))
+            self.dag_path_map[dag.name] = node_path
 
             # set the next DAG to run
             if self.context.state.next_dag is not None:

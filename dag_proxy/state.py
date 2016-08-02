@@ -4,41 +4,24 @@ The request/response state that is passed to all fragments
 import tornado.httpclient
 import copy
 
-import conversion
 
 # TODO: name execution_context?? DagExecutionContext? RequestContext?
 class Context(object):
     '''Context available to processing_nodes
     '''
-    CONVERSION_FUNCS = {
-        'trie': conversion.make_trie,
-    }
 
-    def __init__(self, options, state):
-        # pointer to the global config
-        self.options = options
+    def __init__(self, dag_config, state):
+        # TODO: remove? We only want this so that the data caching is attached
+        # to the version of config, might be better to not give access to the
+        # whole thing since anything here or down is in the getattr/setattr through
+        # dotted notation
+        self.dag_config = dag_config
+
+        # TODO: some sort of switching thing?? this is set on a per-hook basis,
+        # only in here since we have the get_dotted stuff
+        self.options = {}
         self.state = state
         self.tmp = {}
-
-        # TODO: make not accessible to fragments?
-        # TODO: ordereddict (so that hook execution order isn't assumed)
-        # hook_name -> path
-        self.dag_path = {}
-
-        # cache of data converted to various types
-        # this map will be converted_type -> orig_item -> converted_item
-        self._data_cache = {}
-
-    def convert_item(self, convert_type, orig_item):
-        '''Convert a hashable item `orig_item` to `convert_type`
-        '''
-        if convert_type not in self._data_cache:
-            self._data_cache[convert_type] = {}
-
-        if orig_item not in self._data_cache[convert_type]:
-            self._data_cache[convert_type][orig_item] = self.CONVERSION_FUNCS[convert_type](orig_item)
-
-        return self._data_cache[convert_type][orig_item]
 
     def getattr_dotted(self, ident):
         '''Return the value for something in our namespace given dot notation
@@ -46,14 +29,13 @@ class Context(object):
         ident_parts = ident.split('.')
 
         thing = self
-        # get to the correc thing, so we can do appropriate sets
-        for p in ident_parts[:-1]:
+        for p in ident_parts:
             try:
                 thing = getattr(thing, p)
             except AttributeError:
                 thing = thing[p]
 
-        return thing[ident_parts[-1]]
+        return thing
 
     def setattr_dotted(self, ident, val):
         '''Set the value for something in our namespace given dot notation
@@ -61,7 +43,7 @@ class Context(object):
         ident_parts = ident.split('.')
 
         thing = self
-        # get to the correc thing, so we can do appropriate sets
+        # get to the correct thing, so we can do appropriate sets
         for p in ident_parts[:-1]:
             try:
                 thing = getattr(thing, p)

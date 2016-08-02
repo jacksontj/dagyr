@@ -2,8 +2,6 @@
     - listen options (certs, ports, etc.) -- setup DAG, run once per config load
     - what to do with invalid return type (how to handle the error)-- abort DAG?
     - comments on nodes
-    - validate DAG on config load
-        -- warning log message for nodes we don't link?
     - better conversion/visualization/editor tools?
         -- convert DAG to embedded view (for reading)
         -- convert DAG to image (with labels etc.)

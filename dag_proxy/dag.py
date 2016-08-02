@@ -79,6 +79,16 @@ def is_acyclic(path, node):
     return ret
 
 
+def dag_nodes(node, node_set=None):
+    '''Return the list of nodes that are linked in the DAG
+    '''
+    if node_set is None:
+        node_set = set()
+    node_set.add(node.node_id)
+    for child in node.children.itervalues():
+        dag_nodes(child, node_set=node_set)
+    return node_set
+
 # TODO: validation methods
 class Dag(object):
     '''Object to represent the whole dag
@@ -102,8 +112,20 @@ class Dag(object):
             n.link_children(self.nodes)
         self.starting_node = self.nodes[config['starting_node']]
 
+        # verify that the graph is acyclig (thereby making it a DAG)
         if not is_acyclic([], self.starting_node):
             raise Exception("configured DAG {0} is cyclic!!!".format(name))
+
+        # As a nicety, we'll check that all nodes defined in the list are actually
+        # in use in the DAG, if not we'll log a warning, it is not fatal but if
+        # the config is generated this might indicate a problem
+        used_nodes = dag_nodes(self.starting_node)
+        all_nodes = set(self.nodes.iterkeys())
+        if used_nodes != all_nodes:
+            log.warning('The following nodes in DAG {0} are not linked: {1}'.format(
+                self.name,
+                all_nodes - used_nodes,
+            ))
 
     def __call__(self, context):
         node = self.starting_node

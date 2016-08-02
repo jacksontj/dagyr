@@ -5,9 +5,10 @@ import tornado.httpclient
 import copy
 
 
-# TODO: name execution_context?? DagExecutionContext? RequestContext?
-class Context(object):
-    '''Context available to processing_nodes
+class DagExecutionContext(object):
+    '''Context available to the DagExecutor
+
+    This is the context used by the DagExecutor and passed to the processing_nodes
     '''
 
     def __init__(self, dag_config, state):
@@ -20,10 +21,12 @@ class Context(object):
         # TODO: some sort of switching thing?? this is set on a per-hook basis,
         # only in here since we have the get_dotted stuff
         self.options = {}
+        # request state
         self.state = state
+        # temporary storage space (attached to this transaction)
         self.tmp = {}
 
-        # next DAG to run, if we have set one
+        # if not None, this is the next DAG to run
         self.next_dag = None
 
     def getattr_dotted(self, ident):
@@ -60,7 +63,7 @@ class Context(object):
 
 
 class RequestState(object):
-    '''Encapsulate the proxy state
+    '''Encapsulate the request/response state in the proxy
 
     This includes:
         - pristine_request

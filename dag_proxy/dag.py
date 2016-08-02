@@ -187,7 +187,7 @@ class DagExecutor(object):
     def __init__(self, dag_config, req_state):
         self.dag_config = dag_config
 
-        self.context = state.Context(
+        self.context = state.DagExecutionContext(
             dag_config,
             req_state,
         )

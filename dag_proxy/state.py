@@ -46,6 +46,11 @@ class DagExecutionContext(object):
         '''
         ident_parts = ident.split('.')
 
+        # some very VERY basic checking, attempting to not let the DAG set
+        # immutable things
+        if ident_parts[0] in ('dag_config', 'options'):
+            raise Exception('Not allowed to set those!!')
+
         thing = self
         # get to the correct thing, so we can do appropriate sets
         for p in ident_parts[:-1]:

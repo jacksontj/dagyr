@@ -68,31 +68,11 @@ class DagNode(object):
             return self.children[key]
 
 
-def is_acyclic(path, node):
-    '''Check that all given paths from node (given path) are acyclic
-    '''
-    ret = True
-    if node in path:
-        return False
-    path.append(node)
-    for child in node.children.itervalues():
-        ret &= is_acyclic(path, child)
-    return ret
-
-
-def dag_nodes(node, node_set=None):
-    '''Return the list of nodes that are linked in the DAG
-    '''
-    if node_set is None:
-        node_set = set()
-    node_set.add(node.node_id)
-    for child in node.children.itervalues():
-        dag_nodes(child, node_set=node_set)
-    return node_set
-
-# TODO: validation methods
 class Dag(object):
     '''Object to represent the whole dag
+
+    This class includes all of the DAG validation, node creation, and the
+    method for actually executing the DAG.
     '''
     def __init__(self, name, config, processing_node_types=None):
         self.name = name
@@ -113,13 +93,13 @@ class Dag(object):
         self.starting_node = self.nodes[config['starting_node']]
 
         # verify that the graph is acyclig (thereby making it a DAG)
-        if not is_acyclic([], self.starting_node):
+        if not Dag.is_acyclic([], self.starting_node):
             raise Exception("configured DAG {0} is cyclic!!!".format(name))
 
         # As a nicety, we'll check that all nodes defined in the list are actually
         # in use in the DAG, if not we'll log a warning, it is not fatal but if
         # the config is generated this might indicate a problem
-        used_nodes = dag_nodes(self.starting_node)
+        used_nodes = Dag.dag_nodes(self.starting_node)
         all_nodes = set(self.nodes.iterkeys())
         if used_nodes != all_nodes:
             log.warning('The following nodes in DAG {0} are not linked: {1}'.format(
@@ -128,6 +108,8 @@ class Dag(object):
             ))
 
     def __call__(self, context):
+        '''Execute the DAG with the given context
+        '''
         node = self.starting_node
         path = []
         # call the control_dag
@@ -144,10 +126,32 @@ class Dag(object):
             # if the node we executed has no children, we need to see if we
             # should run another DAG, if not then we are all done
             if next_node is None:
-
                 break
             node = next_node
         return path
+
+    @staticmethod
+    def is_acyclic(path, node):
+        '''Check that all given paths from node (given path) are acyclic
+        '''
+        ret = True
+        if node in path:
+            return False
+        path.append(node)
+        for child in node.children.itervalues():
+            ret &= Dag.is_acyclic(path, child)
+        return ret
+
+    @staticmethod
+    def dag_nodes(node, node_set=None):
+        '''Return the list of nodes that are linked in the DAG
+        '''
+        if node_set is None:
+            node_set = set()
+        node_set.add(node.node_id)
+        for child in node.children.itervalues():
+            Dag.dag_nodes(child, node_set=node_set)
+        return node_set
 
 
 # TODO rename to dag_proxy_config or something like that, since its actually the whole config
@@ -215,6 +219,13 @@ class DagExecutor(object):
         )
 
     def call_hook(self, hook_name):
+        '''Call DAG defined for `hook_name` following the DAG chain as it goes
+
+        This method will alter the `context.options` to match the values for the
+        hook we are executing, then it will simply call the DAG, check if another
+        DAG should be called (and continue calling DAGs if necessary) until it has
+        completed.
+        '''
         if hook_name not in self.HOOKS:
             raise RuntimeError('InvalidHook!! {0} not in {1}'.format(hook_name, self.HOOKS))
 

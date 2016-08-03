@@ -46,6 +46,7 @@ class DagExecutionContext(object):
         '''
         ident_parts = ident.split('.')
 
+        # TODO: put in some protected namespace? frozen.dag_config ??
         # some very VERY basic checking, attempting to not let the DAG set
         # immutable things
         if ident_parts[0] in ('dag_config', 'options'):

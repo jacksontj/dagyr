@@ -10,6 +10,12 @@ import processing_nodes
 
 log = logging.getLogger(__name__)
 
+ARG_TYPES = {
+    'string': str,
+    'int': int,
+    'list': list,
+}
+
 
 class DagNodeType(object):
     '''A node template for the DAG
@@ -55,7 +61,9 @@ class DagNode(object):
             else:
                 resolved_args[arg_name] = self.args[arg_name]
 
-        # TODO: validate types etc. from the node_type.arg_spec
+            # validate that the resolved values are of the type defined in the arg_spec
+            if 'type' in arg_spec:
+                assert isinstance(resolved_args[arg_name], ARG_TYPES[arg_spec['type']])
 
         return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
 

@@ -17,6 +17,7 @@ ARG_TYPES = {
     'int': int,
     # since we are using immutable types, we need a more basic check for python
     'list': collections.Sequence,
+    'dict': collections.Mapping,
 }
 
 
@@ -33,7 +34,7 @@ class DagNodeType(object):
 class DagNode(object):
     '''A node in the DAG
 
-    A node in the dag-- otherwise known as a processing_node
+    A node in a dag-- otherwise known as a processing_node
     '''
     def __init__(self, dag_key, node_id, node_config, node_types):
         self.dag_key = dag_key
@@ -45,7 +46,7 @@ class DagNode(object):
 
 
     def link_children(self, nodes):
-        '''called after all nodes are created to link the together
+        '''called after all nodes are created to link them together
         '''
         self.children = {}
         for k, child_id in self.outlets.iteritems():
@@ -64,6 +65,8 @@ class DagNode(object):
             else:
                 resolved_args[arg_name] = self.args[arg_name]
 
+            # TODO: only the `global_option_data_key` args need to have their type
+            #   checked before calling
             # validate that the resolved values are of the type defined in the arg_spec
             if 'type' in arg_spec and not isinstance(resolved_args[arg_name], ARG_TYPES[arg_spec['type']]):
                 raise Exception('Arg {0}={1} type={2} expected_type={3}'.format(

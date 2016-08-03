@@ -6,6 +6,7 @@
         -- convert DAG to embedded view (for reading)
         -- convert DAG to image (with labels etc.)
     - transaction_overrideable configuration
+        -- Better definition of what the HTTP objects are (preferrably some abstraction over the actuall objects)
     - multi-tier proxy configuration
         -- stack of actions in headers (to cfg inconsistencies across the tiers)
         -- how to define a proxy topology and route through it?

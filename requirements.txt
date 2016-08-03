@@ -1,6 +1,7 @@
 tornado
 pyyaml
 networkx
+pyrsistent
 
 # visualization
 matplotlib

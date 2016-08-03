@@ -1,6 +1,8 @@
 import copy
 import yaml
 import logging
+import pyrsistent
+import collections
 
 
 import state
@@ -13,7 +15,8 @@ log = logging.getLogger(__name__)
 ARG_TYPES = {
     'string': str,
     'int': int,
-    'list': list,
+    # since we are using immutable types, we need a more basic check for python
+    'list': collections.Sequence,
 }
 
 
@@ -62,8 +65,13 @@ class DagNode(object):
                 resolved_args[arg_name] = self.args[arg_name]
 
             # validate that the resolved values are of the type defined in the arg_spec
-            if 'type' in arg_spec:
-                assert isinstance(resolved_args[arg_name], ARG_TYPES[arg_spec['type']])
+            if 'type' in arg_spec and not isinstance(resolved_args[arg_name], ARG_TYPES[arg_spec['type']]):
+                raise Exception('Arg {0}={1} type={2} expected_type={3}'.format(
+                    arg_name,
+                    resolved_args[arg_name],
+                    type(resolved_args[arg_name]),
+                    ARG_TYPES[arg_spec['type']],
+                ))
 
         return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
 
@@ -165,16 +173,17 @@ class Dag(object):
 # TODO rename to dag_proxy_config or something like that, since its actually the whole config
 # holder of the whole DAG config
 class DagConfig(object):
-    '''Holder of the Dags!
-    This holds a control_dag (effectively a global one) and a mapping of
-        namespace -> name -> DAG
-    for all the dynamic_dags
+    '''Holder of configuration
+
+    This is the top level object that contains all objects within the config file.
     '''
     CONVERSION_FUNCS = {
         'trie': conversion.make_trie,
     }
     def __init__(self, config):
-        self.config = config
+        # freeze config -- we don't want anything changing it-- so we'll just
+        # freeze it now
+        self.config = pyrsistent.freeze(config)
 
         self.processing_node_types = {}
         for k, cfg in self.config['processing_node_types'].iteritems():

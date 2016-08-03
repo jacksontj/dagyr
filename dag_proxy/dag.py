@@ -48,21 +48,16 @@ class DagNode(object):
     def __call__(self, context):
         '''Run the node and return
         '''
-        # TODO: more efficient?
-        # If is_option_data, we could do this on config load, but since we allow
-        # the option_data to change on a per-hook basis we have to do this at runtime
-        # since we aren't sure which set of option_data we have
-        # if not, then we could potentially split the transaction context from the
-        # hook context to do this in a pre-processing manner
-        args = copy.deepcopy(self.args)
-        for argname, arg_spec in self.node_type.arg_spec.iteritems():
-            if arg_spec.get('is_option_data', False):
-                args[argname] = context.options[self.args[argname]]
-
+        resolved_args = {}
+        for arg_name, arg_spec in self.node_type.arg_spec.iteritems():
+            if 'global_option_data_key' in arg_spec:
+                resolved_args[arg_name] = context.options[arg_spec['global_option_data_key']][self.args[arg_name]]
+            else:
+                resolved_args[arg_name] = self.args[arg_name]
 
         # TODO: validate types etc. from the node_type.arg_spec
 
-        return self.node_type.func(context, args)
+        return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
 
     def get_child(self, key):
         '''Return the next node (if there is one)
@@ -101,7 +96,6 @@ class Dag(object):
     '''
     def __init__(self, name, config, processing_node_types=None):
         self.name = name
-        self.option_data = config.get('option_data', {})
         self.nodes = {}
 
         # temp space for the nodes as we need to create them
@@ -227,8 +221,8 @@ class DagExecutor(object):
         # name of the dag to run for the given hook
         hook_meta = self.dag_config.config['hook_dag_map'][hook_name]
         dag = self.dag_config.dags[hook_meta['dag_name']]
-        if 'option_data_key' in hook_meta:
-            self.context.options = self.dag_config.config['option_data'][hook_meta['option_data_key']]
+        if 'global_option_data_key' in hook_meta:
+            self.context.options = self.dag_config.config['global_option_data'][hook_meta['global_option_data_key']]
         else:
             self.context.options = {}
 

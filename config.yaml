@@ -1,9 +1,8 @@
-# TODO: other metadata? if not then we can just change to hook -> name
-# which DAG to execute for each "hook"
+# which DAG to execute for each "hook" and what global_option_data namespace to use
 hook_dag_map:
   ingress:
     dag_name: ingress
-    option_data_key: ingress
+    global_option_data_key: ingress
 
   egress:
     dag_name: egress
@@ -11,14 +10,12 @@ hook_dag_map:
 # map of namespace -> option_data
 # these are attached to hooks in the `hook_dag_map` and passed to a DAG
 # during execution
-# TODO: change to global_option_data
-option_data:
+global_option_data:
   ingress:
-    valid_domains:
-      - a.com
-      - b.com
-      - localhost:8888
-    valid_paths: ['/foo/bar', '/foo']
+    # TODO: better example.. this is a bit of a stretch
+    response_codes:
+      success: 200
+      notfound: 404
 
 # what types of processing_nodes -- effectively a template
 processing_node_types:
@@ -32,26 +29,14 @@ processing_node_types:
     arg_spec:
       # this is a thing that will be passed a key to lookup the value
       attribute:
-        # TODO: is this needed? the key is already there...
         name: 'a readable name'
         info: 'name of the attribute to match'
         type: string
       # this just gets a value-- just use it
       values:
-        # TODO: is this needed? the key is already there...
         name: 'a readable name'
         info: 'list of values to match against'
         type: list  # TODO: define type of values?
-        # TODO: key for all possible options, NOT a place to get the values from
-        # for the node instance-- they live in the node instance as "args".
-        # this means that the value you are passed will be a key to lookup in options
-        global_options_data_key: valid_domains
-
-        is_option_data: true
-      params:
-        name: params
-        type: list of strings
-
   2:
     name: 'execute_dynamic_dag'
     info: 'execute another dag'
@@ -59,13 +44,11 @@ processing_node_types:
     arg_spec:
       # this is a thing that will be passed a key to lookup the value
       dag_prefix:
-        # TODO: is this needed? the key is already there...
         name: 'a readable name'
         info: 'string prefix'
         type: string
       # this just gets a value-- just use it
       suffix_key:
-        # TODO: is this needed? the key is already there...
         name: 'a readable name'
         info: 'list of values to match against'
         type: string
@@ -76,17 +59,34 @@ processing_node_types:
     arg_spec:
       # this is a thing that will be passed a key to lookup the value
       attribute:
-        # TODO: is this needed? the key is already there...
         name: 'a readable name'
         info: 'name of the attribute to match'
         type: string
       # this just gets a value-- just use it
       value:
-        # TODO: is this needed? the key is already there...
         name: 'what to set it to'
         info: 'what value to set'
         # TODO: any??
         #type: string
+  4:
+    name: 'set_status_code'
+    info: 'set status code'
+    func: set_attribute
+    arg_spec:
+      # this is a thing that will be passed a key to lookup the value
+      attribute:
+        name: 'a readable name'
+        info: 'name of the attribute to match'
+        type: string
+      # this just gets a value-- just use it
+      value:
+        name: 'what to set it to'
+        info: 'what value to set'
+        type: int
+        # key for all possible options, NOT a place to get the values from
+        # for the node instance-- they live in the node instance as "args".
+        # this means that the value you are passed will be a key to lookup in options
+        global_option_data_key: response_codes
 
 # TODO: add options for max_depth, etc. for DAG validation and execution
 # all the DAGs
@@ -98,13 +98,12 @@ dags:
       1: # node instance
         type_id: 1
         args:
-          # TODO: make this match up with the global lookup thingy (might switch with values)
           attribute: 'state.pristine_request.headers.Host'
-          # TODO: also support lookaside in this same namespace
-          values: 'valid_domains'
-          params:
-           - a
-           - b
+          # list of the domains to match against
+          values:
+            - a.com
+            - b.com
+            - localhost:8888
         outlets:
           true: 2
           false: 3
@@ -121,10 +120,10 @@ dags:
         outlets:
           true: 4
       4:
-        type_id: 3
+        type_id: 4
         args:
           attribute: state.response.code
-          value: 404
+          value: notfound
   egress:
     starting_node: 1
     processing_nodes:
@@ -142,7 +141,9 @@ dags:
         type_id: 1
         args:
           attribute: 'state.pristine_request.path'
-          values: 'valid_paths'
+          values:
+            - '/foo/bar'
+            - '/foo'
         outlets:
           true: 2
           false: 4

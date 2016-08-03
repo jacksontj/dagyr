@@ -29,8 +29,7 @@ processing_node_types:
     # this node_type has the effect of setting a "domain DAG name"
     func: attribute_match
     # this is what the args are, and potentially how to resolve them (look it up)
-    # TODO: rename arg_spec
-    spec:
+    arg_spec:
       # this is a thing that will be passed a key to lookup the value
       attribute:
         # TODO: is this needed? the key is already there...
@@ -57,7 +56,7 @@ processing_node_types:
     name: 'execute_dynamic_dag'
     info: 'execute another dag'
     func: execute_dynamic_dag
-    spec:
+    arg_spec:
       # this is a thing that will be passed a key to lookup the value
       dag_prefix:
         # TODO: is this needed? the key is already there...
@@ -74,7 +73,7 @@ processing_node_types:
     name: 'set_attribute'
     info: 'set an attribute'
     func: set_attribute
-    spec:
+    arg_spec:
       # this is a thing that will be passed a key to lookup the value
       attribute:
         # TODO: is this needed? the key is already there...

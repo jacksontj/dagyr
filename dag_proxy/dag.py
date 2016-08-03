@@ -18,7 +18,7 @@ class DagNodeType(object):
         self.node_type_config = node_type_config
 
         self.func = getattr(processing_nodes, node_type_config['func']).processing_node
-        self.spec = node_type_config['spec']
+        self.arg_spec = node_type_config['arg_spec']
 
 
 class DagNode(object):
@@ -55,12 +55,12 @@ class DagNode(object):
         # if not, then we could potentially split the transaction context from the
         # hook context to do this in a pre-processing manner
         args = copy.deepcopy(self.args)
-        for argname, spec in self.node_type.spec.iteritems():
-            if spec.get('is_option_data', False):
+        for argname, arg_spec in self.node_type.arg_spec.iteritems():
+            if arg_spec.get('is_option_data', False):
                 args[argname] = context.options[self.args[argname]]
 
 
-        # TODO: validate types etc. from the node_type.spec
+        # TODO: validate types etc. from the node_type.arg_spec
 
         return self.node_type.func(context, args)
 

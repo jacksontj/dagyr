@@ -1,24 +1,41 @@
+# dagyr
+A library for running DAGs against a context.
+
+The motivation here is to create a flexible, pluggable library for DAGs execution.
+
+
 # dag_proxy
-Sketch of what a proxy where all configuration was DAGs
+Sketch of what a proxy based on dagyr
 
-# parts
-effectively we want a DAG runner, which has in itself a DAG, config, etc. which
-transactions end up stepping through (in their own object or w/e for tracking).
-The configs etc should be encapsulated in the runner, so that when a new config
-is loaded, we don't have to deal with pointers moving-- new transactions will
-simply be scheduled on the new DAG runner
+## High-Level Operation
+The DAG execution is allowed to modify the request/response in hooks
+(ingress, egress, etc.) which will then be used by the proxy.
+The basic request flow is:
 
-# control DAG
-This DAG is responsible for the overall flow of request handling. This defines which
-other DAGs to run, as well as how to handle error conditions.
+```
+accept -> create state -> ingress hook -> make downstream request -> egress hook -> serve response
+```
 
-# dynamic_dags
-This is a map of namespace -> key -> DAG. The intent here is to allow the user
-to create an arbitrary number of layers (objects that need to be matched) that
-you can associate DAGs with
+## RequestState
+This object encapsulates the http request/response state. This is what the
+underlying proxy uses to determine how to handle the request. This contains 4
+objects: pristine_request, request, pristine_response, response. "pristine" meaning
+untouched-- specifically that we don't allow modification of these entries as
+processing_nodes may want to switch based off of the original request/response
+before mutation.
 
-# notes:
-    - nodes can have default values
+### RequestState object format
+Note: this is still a rough skeleton, so this will change dramatically
 
-# some guiding principles
-- "case consistency"
+These objects are really just dicts of data. The data today looks something like:
+```
+    {
+        'code': 200,
+        'headers': {'X-Foo': 'bar'},
+        'body': 'the body!',
+    }
+```
+
+These objects are used by the underlying proxy to represent the transaction at
+the various phases. This will be expanded to include transaction_overrideable
+configuration (timeouts, lb options, etc.).

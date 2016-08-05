@@ -1,4 +1,6 @@
 import tornado.httpclient
+
+import pyrsistent
 import copy
 
 
@@ -83,6 +85,9 @@ class RequestState(object):
         # follow redirects, timeouts, etc. (basically transaction overrideable
         # configuration)
         self.request = copy.deepcopy(self.pristine_request)
+
+        # freeze the pristine request
+        self.pristine_request = pyrsistent.freeze(self.pristine_request)
 
         self.pristine_response = {}
         self.response = {}

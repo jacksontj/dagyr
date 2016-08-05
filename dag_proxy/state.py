@@ -16,7 +16,6 @@ class DagExecutionContext(object):
         self.dag_config = dag_config
 
         # TODO: some sort of switching thing?? this is set on a per-hook basis,
-        # TODO: frozen dict
         # only in here since we have the get_dotted stuff
         self.options = {}
         # request state

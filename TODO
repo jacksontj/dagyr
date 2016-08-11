@@ -10,3 +10,7 @@
     - multi-tier proxy configuration
         -- stack of actions in headers (to cfg inconsistencies across the tiers)
         -- how to define a proxy topology and route through it?
+        -- create processing_nodes that can call other processing_nodes
+    - processing_nodes calling other processing_nodes, this will be useful for
+        iterating (to avoid the need for loops) and wrapping execution to happen
+        remotely or at a later time

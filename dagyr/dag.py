@@ -136,10 +136,11 @@ class Dag(object):
             node_ret = node(context)
             next_node = node.get_child(node_ret)
             # TODO: change to namedtuple?
+            # TODO: return pointers to the node?
             path.append({
-                'node': str(node),
+                'node': (node.dag_key, node.node_id),
                 'node_ret': node_ret,
-                'next_node': str(next_node),
+                'next_node': (next_node.dag_key, next_node.node_id) if next_node else None,
             })
 
             # if the node we executed has no children, we need to see if we
@@ -148,6 +149,21 @@ class Dag(object):
                 break
             node = next_node
         return path
+
+    @staticmethod
+    def all_paths(node):
+        '''Return a list of all paths
+        '''
+        # fast path
+        if not node.children:
+            return [[node.node_id]]
+
+        paths = []
+        for child in node.children.itervalues():
+            for p in Dag.all_paths(child):
+                p.insert(0, node.node_id)
+                paths.append(p)
+        return paths
 
     @staticmethod
     def is_acyclic(path, node):

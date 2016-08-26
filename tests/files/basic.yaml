@@ -4,9 +4,6 @@ hook_dag_map:
     dag_name: ingress
     global_option_data_key: ingress
 
-  egress:
-    dag_name: egress
-
 # map of namespace -> option_data
 # these are attached to hooks in the `hook_dag_map` and passed to a DAG
 # during execution
@@ -98,12 +95,11 @@ dags:
       1: # node instance
         type_id: 1
         args:
-          attribute: 'state.pristine_request.headers.Host'
+          attribute: 'state.host'
           # list of the domains to match against
           values:
             - a.com
             - b.com
-            - localhost:8888
         outlets:
           true: 2
           false: 3
@@ -111,56 +107,33 @@ dags:
         type_id: 2
         args:
           dag_prefix: dynamic_domain
-          suffix_key: 'state.pristine_request.headers.Host'
+          suffix_key: 'state.host'
       3:
         type_id: 3
         args:
-          attribute: state.response.body
+          attribute: state.response_body
           value: "not found!"
         outlets:
           true: 4
       4:
         type_id: 4
         args:
-          attribute: state.response.code
+          attribute: state.response_code
           value: notfound
-  egress:
-    starting_node: 1
-    processing_nodes:
-      1: # node instance
-        type_id: 3
-        args:
-          attribute: 'state.response.headers.foo'
-          value: 'bar'
 
   # per domain
-  dynamic_domain_localhost:8888:
+  dynamic_domain_b.com:
     starting_node: 1
     processing_nodes:
       1:
-        type_id: 1
+        type_id: 3
         args:
-          attribute: 'state.pristine_request.path'
-          values:
-            - '/foo/bar'
-            - '/foo'
+          attribute: "state.response_body"
+          value: "found!"
         outlets:
           true: 2
-          false: 4
       2:
         type_id: 3
         args:
-          attribute: "state.response.body"
-          value: "found!"
-        outlets:
-          true: 3
-      3:
-        type_id: 3
-        args:
-          attribute: "state.response.code"
+          attribute: "state.response_code"
           value: 200
-      4:
-        type_id: 3
-        args:
-          attribute: "state.request.headers.Host"
-          value: "foo.com"

@@ -1,48 +1,88 @@
-import tornado.web
-import tornado.ioloop
+import unittest
 
-import tornado.testing
-
-
-import dag_proxy.dag
-import dag_proxy.handler
+import dagyr.dag
 
 
-class TestBasic(tornado.testing.AsyncHTTPTestCase):
-    # TODO: consolidate into a method in the lib
-    def get_app(self):
-        # only a single handler-- that does all the DAG magic
-        app = tornado.web.Application(
-            [(r"/.*", dag_proxy.handler.DagHandler)],
-            debug=True,
+class TestBasic(unittest.TestCase):
+    def setUp(self):
+        # TODO: helper method to load files
+        self.dagyr_config = dagyr.dag.DagConfig.from_file(
+            '/home/jacksontj/src/dagyr/tests/files/basic.yaml',
         )
 
-        # TODO: config? autoreload is only nice for development and debugging
-        config_file = 'config.yaml'
-        # load initial config file
-        app.dag_config = dag_proxy.dag.DagConfig.from_file(config_file)
-        return app
+    def executor_path(self, e):
+        '''Condense the DAG path into a list of [(hook, [idlist])]
+        '''
+        path = []
+        for hook, dag_path in e.dag_path:
+            hook_path = []
+            for h in dag_path:
+                hook_path.append(h['node'][1])
+            path.append((hook, hook_path))
+        return path
 
-    def test_not_matching_domain(self):
-        response = self.fetch(
-            '/',
-            headers={'Host': 'foo.com'},
+    def test_paths(self):
+        # TODO: this doesn't get paths across dags-- just the one
+        r = dagyr.dag.Dag.all_paths(self.dagyr_config.dags['ingress'].starting_node)
+        self.assertEqual(
+            r,
+            [[1,3,4], [1,2]],
         )
-        self.assertEqual(response.code, 404)
-        self.assertEqual(response.body, 'not found!')
 
-    def test_matching_domain_not_matching_path(self):
-        response = self.fetch(
-            '/',
-            headers={'Host': 'localhost:8888'},
-        )
-        self.assertEqual(response.code, 200)
-        self.assertEqual(response.headers['Foo'], 'bar')
+    def test_12(self):
+        state = {
+            'host': 'b.com',
+        }
 
-    def test_matching_domain_matching_path(self):
-        response = self.fetch(
-            '/foo',
-            headers={'Host': 'localhost:8888'},
+        # get an executor
+        dag_executor = dagyr.dag.DagExecutor(
+            self.dagyr_config,
+            state,
         )
-        self.assertEqual(response.code, 200)
-        self.assertEqual(response.body, 'found!')
+        # execute it!
+        dag_executor.call_hook('ingress')
+
+        # make sure we got the results we wanted
+        self.assertEqual(
+            state,
+            {
+                'response_body': 'found!',
+                'host': 'b.com',
+                'response_code': 200,
+            },
+        )
+
+        # ensure we went the path we expected
+        self.assertEqual(
+            self.executor_path(dag_executor),
+            [('ingress', [1, 2]), ('dynamic_domain_b.com', [1,2])],
+        )
+
+    def test_134(self):
+        state = {
+            'host': 'notavalidhostname',
+        }
+
+        # get an executor
+        dag_executor = dagyr.dag.DagExecutor(
+            self.dagyr_config,
+            state,
+        )
+        # execute it!
+        dag_executor.call_hook('ingress')
+
+        # make sure we got the results we wanted
+        self.assertEqual(
+            state,
+            {
+                'response_body': 'not found!',
+                'host': 'notavalidhostname',
+                'response_code': 404,
+            },
+        )
+
+        # ensure we went the path we expected
+        self.assertEqual(
+            self.executor_path(dag_executor),
+            [('ingress', [1, 3, 4])],
+        )

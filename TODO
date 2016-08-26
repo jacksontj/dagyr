@@ -1,16 +1,9 @@
 # TODO
-    - listen options (certs, ports, etc.) -- setup DAG, run once per config load
     - what to do with invalid return type (how to handle the error)-- abort DAG?
     - comments on nodes
     - better conversion/visualization/editor tools?
         -- convert DAG to embedded view (for reading)
         -- convert DAG to image (with labels etc.)
-    - transaction_overrideable configuration
-        -- Better definition of what the HTTP objects are (preferrably some abstraction over the actuall objects)
-    - multi-tier proxy configuration
-        -- stack of actions in headers (to cfg inconsistencies across the tiers)
-        -- how to define a proxy topology and route through it?
-        -- create processing_nodes that can call other processing_nodes
     - processing_nodes calling other processing_nodes, this will be useful for
         iterating (to avoid the need for loops) and wrapping execution to happen
         remotely or at a later time

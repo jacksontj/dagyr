@@ -17,7 +17,7 @@ class TestBasic(unittest.TestCase):
         for hook, dag_path in e.dag_path:
             hook_path = []
             for h in dag_path:
-                hook_path.append(h['node'][1])
+                hook_path.append(h['node'].node_id)
             path.append((hook, hook_path))
         return path
 

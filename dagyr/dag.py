@@ -44,7 +44,6 @@ class DagNode(object):
 
         self.args = node_config['args']
 
-
     def link_children(self, nodes):
         '''called after all nodes are created to link them together
         '''
@@ -136,11 +135,10 @@ class Dag(object):
             node_ret = node(context)
             next_node = node.get_child(node_ret)
             # TODO: change to namedtuple?
-            # TODO: return pointers to the node?
             path.append({
-                'node': (node.dag_key, node.node_id),
+                'node': node,
                 'node_ret': node_ret,
-                'next_node': (next_node.dag_key, next_node.node_id) if next_node else None,
+                'next_node': next_node,
             })
 
             # if the node we executed has no children, we need to see if we
@@ -152,7 +150,7 @@ class Dag(object):
 
     @staticmethod
     def all_paths(node):
-        '''Return a list of all paths
+        '''Return a list of all paths in the DAG attached to `node`
         '''
         # fast path
         if not node.children:

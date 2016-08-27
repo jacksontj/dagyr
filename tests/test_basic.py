@@ -10,11 +10,11 @@ class TestBasic(unittest.TestCase):
             '/home/jacksontj/src/dagyr/tests/files/basic.yaml',
         )
 
-    def executor_path(self, e):
+    def executor_path(self, e, hook='ingress'):
         '''Condense the DAG path into a list of [(hook, [idlist])]
         '''
         path = []
-        for hook, dag_path in e.dag_path:
+        for hook, dag_path in e.hook_path_map[hook].iteritems():
             hook_path = []
             for h in dag_path:
                 hook_path.append(h['node'].node_id)

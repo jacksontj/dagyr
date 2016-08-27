@@ -263,6 +263,9 @@ class DagExecutor(object):
             req_state,
         )
 
+        # map of hook -> dag path
+        self.hook_path_map = collections.OrderedDict()
+
     def call_hook(self, hook_name):
         '''Call DAG defined for `hook_name` following the DAG chain as it goes
 
@@ -271,6 +274,7 @@ class DagExecutor(object):
         DAG should be called (and continue calling DAGs if necessary) until it has
         completed.
         '''
+        # check that this is a valid hook
         if hook_name not in self.dag_config.config['hook_dag_map']:
             raise RuntimeError('InvalidHook!! {0} not in {1}'.format(hook_name, self.dag_config.config['hook_dag_map'].keys()))
 
@@ -282,24 +286,22 @@ class DagExecutor(object):
         else:
             self.context.options = {}
 
-        # TODO: ordereddict?
-        # list of tuple (dag, (node, node, ...))
-        self.dag_path = []
-        # map of dag -> path
-        self.dag_path_map = {}
+        # TODO: check that we haven't run this hook before? at least warn about it?
+        dag_path = collections.OrderedDict()
+        self.hook_path_map[hook_name] = dag_path
+
 
         while dag:
-            if dag.name in self.dag_path_map:
+            if dag.name in dag_path:
                 log.error("hook execution for {0} looping on dag {1}, path={2}".format(
                     hook_name,
                     dag.name,
-                    path=self.dag_path,
+                    path=dag_path,
                 ))
                 # TODO: better exception?
                 raise Exception()
             node_path = dag(self.context)
-            self.dag_path.append((dag.name, node_path))
-            self.dag_path_map[dag.name] = node_path
+            dag_path[dag.name] = node_path
 
             # set the next DAG to run
             if self.context.next_dag is not None:

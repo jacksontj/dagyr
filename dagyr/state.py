@@ -24,9 +24,11 @@ class DagExecutionContext(object):
         # TODO: some sort of switching thing?? this is set on a per-hook basis,
         # only in here since we have the get_dotted stuff
         self.options = {}
-        # request state
+
+        # user state
         self.state = state
-        # temporary storage space (attached to this transaction)
+
+        # temporary storage space (attached to this execution context)
         self.tmp = {}
 
         # if not None, this is the next DAG to run

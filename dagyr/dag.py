@@ -258,13 +258,15 @@ class DagExecutor(object):
     def __init__(self, dag_config, req_state):
         self.dag_config = dag_config
 
+        # map of hook -> dag path
+        self.hook_path_map = collections.OrderedDict()
+
+        # create the context with which we'll execute the DAG
         self.context = state.DagExecutionContext(
             dag_config,
             req_state,
         )
 
-        # map of hook -> dag path
-        self.hook_path_map = collections.OrderedDict()
 
     def call_hook(self, hook_name):
         '''Call DAG defined for `hook_name` following the DAG chain as it goes

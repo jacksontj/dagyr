@@ -8,4 +8,4 @@
         - calling other processing_nodes, this will be useful for
             iterating (to avoid the need for loops) and wrapping execution to happen
             remotely or at a later time
-        - pass pointer to "DagExecutor" (or APIs to access path information)
+        - pass pointer of "DagExecutor" to DagExecutionContext (or APIs to access path information)

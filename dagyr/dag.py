@@ -189,13 +189,14 @@ class Dag(object):
         return node_set
 
 
-# TODO rename to dag_proxy_config or something like that, since its actually the whole config
+# TODO rename to dag_set? or something like that, since its actually the whole config
 # holder of the whole DAG config
 class DagConfig(object):
     '''Holder of configuration
 
     This is the top level object that contains all objects within the config file.
     '''
+    # TODO: make pluggable
     CONVERSION_FUNCS = {
         'trie': conversion.make_trie,
     }
@@ -219,18 +220,18 @@ class DagConfig(object):
         # will access the same data
         # cache of data converted to various types
         # this map will be converted_type -> orig_item -> converted_item
-        self._data_cache = {}
+        self.data_cache = {}
 
     def convert_item(self, convert_type, orig_item):
         '''Convert a hashable item `orig_item` to `convert_type`
         '''
-        if convert_type not in self._data_cache:
-            self._data_cache[convert_type] = {}
+        if convert_type not in self.data_cache:
+            self.data_cache[convert_type] = {}
 
-        if orig_item not in self._data_cache[convert_type]:
-            self._data_cache[convert_type][orig_item] = self.CONVERSION_FUNCS[convert_type](orig_item)
+        if orig_item not in self.data_cache[convert_type]:
+            self.data_cache[convert_type][orig_item] = self.CONVERSION_FUNCS[convert_type](orig_item)
 
-        return self._data_cache[convert_type][orig_item]
+        return self.data_cache[convert_type][orig_item]
 
     @staticmethod
     def from_file(filepath):
@@ -238,10 +239,14 @@ class DagConfig(object):
             cfg = yaml.load(fh)
             return DagConfig(cfg)
 
+    def get_executor(self, state):
+        return DagExecutor(self, state)
+
 
 class DagExecutor(object):
     '''This object is responsible for stepping a transaction through a DagConfig
     '''
+    # TODO: pluggable?
     HOOKS = (
         'ingress',
         'egress',

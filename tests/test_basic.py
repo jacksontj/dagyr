@@ -35,10 +35,7 @@ class TestBasic(unittest.TestCase):
         }
 
         # get an executor
-        dag_executor = dagyr.dag.DagExecutor(
-            self.dagyr_config,
-            state,
-        )
+        dag_executor = self.dagyr_config.get_executor(state)
         # execute it!
         dag_executor.call_hook('ingress')
 
@@ -64,10 +61,7 @@ class TestBasic(unittest.TestCase):
         }
 
         # get an executor
-        dag_executor = dagyr.dag.DagExecutor(
-            self.dagyr_config,
-            state,
-        )
+        dag_executor = self.dagyr_config.get_executor(state)
         # execute it!
         dag_executor.call_hook('ingress')
 

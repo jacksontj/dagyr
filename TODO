@@ -4,6 +4,8 @@
     - better conversion/visualization/editor tools?
         -- convert DAG to embedded view (for reading)
         -- convert DAG to image (with labels etc.)
-    - processing_nodes calling other processing_nodes, this will be useful for
-        iterating (to avoid the need for loops) and wrapping execution to happen
-        remotely or at a later time
+    - processing_nodes:
+        - calling other processing_nodes, this will be useful for
+            iterating (to avoid the need for loops) and wrapping execution to happen
+            remotely or at a later time
+        - pass pointer to "DagExecutor" (or APIs to access path information)

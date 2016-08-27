@@ -1,6 +1,5 @@
 # TODO
     - what to do with invalid return type (how to handle the error)-- abort DAG?
-    - comments on nodes
     - better conversion/visualization/editor tools?
         -- convert DAG to embedded view (for reading)
         -- convert DAG to image (with labels etc.)

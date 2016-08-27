@@ -144,6 +144,10 @@ class Dag(object):
         # call the control_dag
         while True:
             node_ret = node(context)
+            # TODO: decide what to do here when the child doesn't exist
+            # it'll throw a KeyError, and we can either assume execution
+            # ends or raise an exception-- we may want to make this configurable
+            # per processing_node
             next_node = node.get_child(node_ret)
             # TODO: change to namedtuple?
             path.append({

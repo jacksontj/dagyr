@@ -84,6 +84,24 @@ processing_node_types:
         # for the node instance-- they live in the node instance as "args".
         # this means that the value you are passed will be a key to lookup in options
         global_option_data_key: response_codes
+  5:
+    name: 'iterate_until'
+    info: 'iterate_until'
+    func: iterate
+    arg_spec:
+      # this is a thing that will be passed a key to lookup the value
+      processing_node_name:
+        name: 'name of the processing node to call'
+        info: 'name of the processing node to call'
+        type: string
+      iterate_limit:
+        name: max times we'll call
+        info: max times we'll call
+        type: int
+      expected_value:
+        name: what return we want
+        info: what return we want
+      # TODO: how to wrap the other processing_node_type's arguments :/
 
 # TODO: add options for max_depth, etc. for DAG validation and execution
 # all the DAGs
@@ -120,6 +138,14 @@ dags:
         args:
           attribute: state.response_code
           value: notfound
+        outlets:
+          true: 5
+      5:
+        type_id: 5
+        args:
+          processing_node_name: eventual_bool
+          iterate_limit: 4
+          expected_value: true
 
   # per domain
   dynamic_domain_b.com:

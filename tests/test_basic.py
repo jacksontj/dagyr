@@ -26,7 +26,7 @@ class TestBasic(unittest.TestCase):
         r = dagyr.dag.Dag.all_paths(self.dagyr_config.dags['ingress'].starting_node)
         self.assertEqual(
             r,
-            [[1,3,4], [1,2]],
+            [[1,3,4,5], [1,2]],
         )
 
     def test_12(self):
@@ -69,6 +69,7 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(
             state,
             {
+                'ebool_count': 3,
                 'response_body': 'not found!',
                 'host': 'notavalidhostname',
                 'response_code': 404,
@@ -78,5 +79,5 @@ class TestBasic(unittest.TestCase):
         # ensure we went the path we expected
         self.assertEqual(
             self.executor_path(dag_executor),
-            [('ingress', [1, 3, 4])],
+            [('ingress', [1, 3, 4, 5])],
         )

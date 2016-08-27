@@ -4,7 +4,8 @@
         -- convert DAG to embedded view (for reading)
         -- convert DAG to image (with labels etc.)
     - processing_nodes:
-        - calling other processing_nodes, this will be useful for
-            iterating (to avoid the need for loops) and wrapping execution to happen
-            remotely or at a later time
+        - calling other processing_nodes (started, needs more work)
+            -- "wrap" other processing_node arguments
+            -- make accesing the other funcs less... difficult :)
+
         - pass pointer of "DagExecutor" to DagExecutionContext (or APIs to access path information)

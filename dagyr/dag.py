@@ -24,10 +24,10 @@ ARG_TYPES = {
 class DagNodeType(object):
     '''A node template for the DAG
     '''
-    def __init__(self, node_type_config):
+    def __init__(self, node_type_config, funcs):
         self.node_type_config = node_type_config
 
-        self.func = getattr(processing_nodes, node_type_config['func']).processing_node
+        self.func = funcs[node_type_config['func']]
         self.arg_spec = node_type_config['arg_spec']
 
 
@@ -218,9 +218,12 @@ class DagConfig(object):
         # freeze it now
         self.config = pyrsistent.freeze(config)
 
+        # TODO better names...
+        self.processing_node_funcs = processing_nodes.load()
+
         self.processing_node_types = {}
         for k, cfg in self.config['processing_node_types'].iteritems():
-            self.processing_node_types[k] = DagNodeType(cfg)
+            self.processing_node_types[k] = DagNodeType(cfg, self.processing_node_funcs)
 
         self.dags = {}
         for dag_key, dag_meta in self.config['dags'].iteritems():

@@ -244,11 +244,6 @@ class DagConfig(object):
 class DagExecutor(object):
     '''This object is responsible for stepping a transaction through a DagConfig
     '''
-    # TODO: pluggable?
-    HOOKS = (
-        'ingress',
-        'egress',
-    )
     def __init__(self, dag_config, req_state):
         self.dag_config = dag_config
 
@@ -265,8 +260,8 @@ class DagExecutor(object):
         DAG should be called (and continue calling DAGs if necessary) until it has
         completed.
         '''
-        if hook_name not in self.HOOKS:
-            raise RuntimeError('InvalidHook!! {0} not in {1}'.format(hook_name, self.HOOKS))
+        if hook_name not in self.dag_config.config['hook_dag_map']:
+            raise RuntimeError('InvalidHook!! {0} not in {1}'.format(hook_name, self.dag_config.config['hook_dag_map'].keys()))
 
         # name of the dag to run for the given hook
         hook_meta = self.dag_config.config['hook_dag_map'][hook_name]

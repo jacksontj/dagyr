@@ -15,6 +15,12 @@ class DagExecutionContext(object):
         # dotted notation
         self.dag_config = dag_config
 
+        # what DAG we are executing
+        self.dag = None
+
+        # which node we are on
+        self.node = None
+
         # TODO: some sort of switching thing?? this is set on a per-hook basis,
         # only in here since we have the get_dotted stuff
         self.options = {}
@@ -48,7 +54,7 @@ class DagExecutionContext(object):
         # TODO: put in some protected namespace? frozen.dag_config ??
         # some very VERY basic checking, attempting to not let the DAG set
         # immutable things
-        if ident_parts[0] in ('dag_config', 'options'):
+        if ident_parts[0] in ('dag_config', 'options', 'dag', 'node'):
             raise Exception('Not allowed to set those!!')
 
         thing = self

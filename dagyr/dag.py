@@ -86,7 +86,11 @@ class DagNode(object):
             resolved_args[arg_name] = context.options[arg_spec['global_option_data_key']][self.args[arg_name]]
             self.validate_arg_type(arg_spec, resolved_args[arg_name])
 
-        return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
+        try:
+            context.node = self
+            return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
+        finally:
+            context.node = None
 
     def get_child(self, key):
         '''Return the next node (if there is one)
@@ -139,29 +143,33 @@ class Dag(object):
     def __call__(self, context):
         '''Execute the DAG with the given context
         '''
-        node = self.starting_node
-        path = []
-        # call the control_dag
-        while True:
-            node_ret = node(context)
-            # TODO: decide what to do here when the child doesn't exist
-            # it'll throw a KeyError, and we can either assume execution
-            # ends or raise an exception-- we may want to make this configurable
-            # per processing_node
-            next_node = node.get_child(node_ret)
-            # TODO: change to namedtuple?
-            path.append({
-                'node': node,
-                'node_ret': node_ret,
-                'next_node': next_node,
-            })
+        try:
+            context.dag = self
+            node = self.starting_node
+            path = []
+            # call the control_dag
+            while True:
+                node_ret = node(context)
+                # TODO: decide what to do here when the child doesn't exist
+                # it'll throw a KeyError, and we can either assume execution
+                # ends or raise an exception-- we may want to make this configurable
+                # per processing_node
+                next_node = node.get_child(node_ret)
+                # TODO: change to namedtuple?
+                path.append({
+                    'node': node,
+                    'node_ret': node_ret,
+                    'next_node': next_node,
+                })
 
-            # if the node we executed has no children, we need to see if we
-            # should run another DAG, if not then we are all done
-            if next_node is None:
-                break
-            node = next_node
-        return path
+                # if the node we executed has no children, we need to see if we
+                # should run another DAG, if not then we are all done
+                if next_node is None:
+                    break
+                node = next_node
+            return path
+        finally:
+            context.dag = None
 
     @staticmethod
     def all_paths(node):

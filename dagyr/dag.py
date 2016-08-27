@@ -44,6 +44,23 @@ class DagNode(object):
 
         self.args = node_config['args']
 
+        # a dict of all the args that don't need to be resolved each execution
+        self.base_resolved_args = {}
+        # list of argnames to resolve later
+        self.to_resolve_args = []
+        for arg_name, arg_spec in self.node_type.arg_spec.iteritems():
+            if 'global_option_data_key' in arg_spec:
+                self.to_resolve_args.append(arg_name)
+            else:
+                if not self.validate_arg_type(arg_spec, self.args[arg_name]):
+                    raise Exception('{0}: arg {1} not the correct type expected={2} actual={3}'.format(
+                        self.__repr__(),
+                        arg_name,
+                        arg_spec['type'],
+                        type(self.args[arg_name]),
+                    ))
+                self.base_resolved_args[arg_name] = self.args[arg_name]
+
     def link_children(self, nodes):
         '''called after all nodes are created to link them together
         '''
@@ -51,29 +68,23 @@ class DagNode(object):
         for k, child_id in self.outlets.iteritems():
             self.children[k] = nodes[child_id]
 
+    def validate_arg_type(self, arg_spec, arg_val):
+        # if there is no type defined, we don't check anything
+        if 'type' not in arg_spec:
+            return True
+        return isinstance(arg_val, ARG_TYPES[arg_spec['type']])
+
     def __repr__(self):
         return str((self.dag_key, self.node_id))
 
     def __call__(self, context):
         '''Run the node and return
         '''
-        resolved_args = {}
-        for arg_name, arg_spec in self.node_type.arg_spec.iteritems():
-            if 'global_option_data_key' in arg_spec:
-                resolved_args[arg_name] = context.options[arg_spec['global_option_data_key']][self.args[arg_name]]
-            else:
-                resolved_args[arg_name] = self.args[arg_name]
-
-            # TODO: only the `global_option_data_key` args need to have their type
-            #   checked before calling
-            # validate that the resolved values are of the type defined in the arg_spec
-            if 'type' in arg_spec and not isinstance(resolved_args[arg_name], ARG_TYPES[arg_spec['type']]):
-                raise Exception('Arg {0}={1} type={2} expected_type={3}'.format(
-                    arg_name,
-                    resolved_args[arg_name],
-                    type(resolved_args[arg_name]),
-                    ARG_TYPES[arg_spec['type']],
-                ))
+        resolved_args = dict(self.base_resolved_args)
+        for arg_name in self.to_resolve_args:
+            arg_spec = self.node_type.arg_spec[arg_name]
+            resolved_args[arg_name] = context.options[arg_spec['global_option_data_key']][self.args[arg_name]]
+            self.validate_arg_type(arg_spec, resolved_args[arg_name])
 
         return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
 

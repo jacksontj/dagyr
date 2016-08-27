@@ -13,3 +13,8 @@
     - Callback API in DAGExecutor to call with state after every dag/step?
         - thinking of the autoremediation case-- some of these steps may take a LONG
             time to complete (hours+), so the state might want to be persisted
+
+
+    - Config
+        -- name and info are the same 99% of the time, we should probably make
+            info optional and default to "name"

@@ -9,3 +9,4 @@
             -- make accesing the other funcs less... difficult :)
 
         - pass pointer of "DagExecutor" to DagExecutionContext (or APIs to access path information)
+    - support processing_nodes returning futures (some non-blocking task)

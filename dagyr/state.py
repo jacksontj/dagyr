@@ -31,9 +31,6 @@ class DagExecutionContext(object):
         # user state
         self.state = state
 
-        # temporary storage space (attached to this execution context)
-        self.tmp = {}
-
     def getattr_dotted(self, ident):
         '''Return the value for something in our namespace given dot notation
         '''

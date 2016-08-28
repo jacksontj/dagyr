@@ -3,8 +3,6 @@
     - better conversion/visualization/editor tools?
         -- convert DAG to embedded view (for reading)
         -- convert DAG to image (with labels etc.)
-    - processing_nodes:
-        - pass pointer of "DagExecutor" to DagExecutionContext (or APIs to access path information)
     - support processing_nodes returning futures (some non-blocking task)
     - Callback API in DAGExecutor to call with state after every dag/step?
         - thinking of the autoremediation case-- some of these steps may take a LONG

@@ -8,6 +8,14 @@
         - thinking of the autoremediation case-- some of these steps may take a LONG
             time to complete (hours+), so the state might want to be persisted
 
+        - Need to decide, should this be `DagConfig` wide, or `DagExecutor` wide
+        Delegate methods (set in the DagExecutionContext), methods for:
+            - start DAG
+            - Start Node
+            - end node
+            - end dag
+
+
 
     - Config
         -- name and info are the same 99% of the time, we should probably make

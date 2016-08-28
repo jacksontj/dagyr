@@ -104,15 +104,14 @@ class Dag(object):
     This class includes all of the DAG validation, node creation, and the
     method for actually executing the DAG.
     '''
-    def __init__(self, name, config, processing_node_types=None):
-        # TODO: rename to `key`
-        self.name = name
+    def __init__(self, key, config, processing_node_types=None):
+        self.key = key
         self.nodes = {}
 
         # temp space for the nodes as we need to create them
         for node_id, node in config['processing_nodes'].iteritems():
             self.nodes[node_id] = DagNode(
-                name,
+                key,
                 node_id,
                 node,
                 processing_node_types,
@@ -125,7 +124,7 @@ class Dag(object):
 
         # verify that the graph is acyclig (thereby making it a DAG)
         if not Dag.is_acyclic([], self.starting_node):
-            raise Exception("configured DAG {0} is cyclic!!!".format(name))
+            raise Exception("configured DAG {0} is cyclic!!!".format(key))
 
         # As a nicety, we'll check that all nodes defined in the list are actually
         # in use in the DAG, if not we'll log a warning, it is not fatal but if
@@ -134,12 +133,12 @@ class Dag(object):
         all_nodes = set(self.nodes.iterkeys())
         if used_nodes != all_nodes:
             log.warning('The following nodes in DAG {0} are not linked: {1}'.format(
-                self.name,
+                self.key,
                 all_nodes - used_nodes,
             ))
 
     def __repr__(self):
-        return '%s: %s' % (self.__class__.__name__, self.name)
+        return '%s: %s' % (self.__class__.__name__, self.key)
 
     def __call__(self, context):
         '''Execute the DAG with the given context
@@ -162,7 +161,7 @@ class Dag(object):
                     'node_ret': node_ret,
                     'next_node': next_node,
                 }
-                context.execution_path.append(((self.name, node.node_id), step_ret))
+                context.execution_path.append(((self.key, node.node_id), step_ret))
                 path.append(step_ret)
 
                 # if the node we executed has no children, we need to see if we

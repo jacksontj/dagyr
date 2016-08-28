@@ -31,6 +31,12 @@ class DagNodeType(object):
         self.func = funcs[node_type_config['func']]
         self.arg_spec = node_type_config['arg_spec']
 
+    def validate_arg_type(self, arg_name, arg_val):
+        # if there is no type defined, we don't check anything
+        if 'type' not in self.arg_spec[arg_name]:
+            return True
+        return isinstance(arg_val, ARG_TYPES[self.arg_spec[arg_name]['type']])
+
 
 class DagNode(object):
     '''A node in the DAG
@@ -53,7 +59,7 @@ class DagNode(object):
             if 'global_option_data_key' in arg_spec:
                 self.to_resolve_args.append(arg_name)
             else:
-                if not self.validate_arg_type(arg_spec, self.args[arg_name]):
+                if not self.node_type.validate_arg_type(arg_name, self.args[arg_name]):
                     raise Exception('{0}: arg {1} not the correct type expected={2} actual={3}'.format(
                         self.__repr__(),
                         arg_name,
@@ -69,12 +75,6 @@ class DagNode(object):
         for k, child_id in self.outlets.iteritems():
             self.children[k] = nodes[child_id]
 
-    def validate_arg_type(self, arg_spec, arg_val):
-        # if there is no type defined, we don't check anything
-        if 'type' not in arg_spec:
-            return True
-        return isinstance(arg_val, ARG_TYPES[arg_spec['type']])
-
     def __repr__(self):
         return str((self.dag_key, self.node_id))
 
@@ -85,7 +85,7 @@ class DagNode(object):
         for arg_name in self.to_resolve_args:
             arg_spec = self.node_type.arg_spec[arg_name]
             resolved_args[arg_name] = context.options[arg_spec['global_option_data_key']][self.args[arg_name]]
-            self.validate_arg_type(arg_spec, resolved_args[arg_name])
+            self.node_type.validate_arg_type(arg_name, resolved_args[arg_name])
 
         return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
 

@@ -10,16 +10,13 @@ class TestBasic(unittest.TestCase):
             '/home/jacksontj/src/dagyr/tests/files/basic.yaml',
         )
 
-    def executor_path(self, e, hook='ingress'):
+    def _condense_path(self, path):
         '''Condense the DAG path into a list of [(hook, [idlist])]
         '''
-        path = []
-        for hook, dag_path in e.hook_path_map[hook].iteritems():
-            hook_path = []
-            for h in dag_path:
-                hook_path.append(h['node'].node_id)
-            path.append((hook, hook_path))
-        return path
+        condensed_path = []
+        for node_map in path:
+            condensed_path.append(node_map['node'].node_id)
+        return condensed_path
 
     def test_paths(self):
         # TODO: this doesn't get paths across dags-- just the one
@@ -37,7 +34,7 @@ class TestBasic(unittest.TestCase):
         # get an executor
         dag_executor = self.dagyr_config.get_executor(state)
         # execute it!
-        dag_executor.call_hook('ingress')
+        dag_path = dag_executor.call_hook('ingress')
 
         # make sure we got the results we wanted
         self.assertEqual(
@@ -49,13 +46,17 @@ class TestBasic(unittest.TestCase):
             },
         )
 
+        self.assertEqual(
+            self._condense_path(dag_path),
+            [1,2],
+        )
         # ensure we went the path we expected
         self.assertEqual(
-            self.executor_path(dag_executor),
-            [('ingress', [1, 2]), ('dynamic_domain_b.com', [1,2])],
+            [x[0] for x in dag_executor.context.execution_path],
+            [('ingress', 1), ('dynamic_domain_b.com', 1), ('dynamic_domain_b.com', 2), ('ingress', 2)],
         )
 
-    def test_134(self):
+    def test_1345(self):
         state = {
             'host': 'notavalidhostname',
         }
@@ -63,7 +64,7 @@ class TestBasic(unittest.TestCase):
         # get an executor
         dag_executor = self.dagyr_config.get_executor(state)
         # execute it!
-        dag_executor.call_hook('ingress')
+        dag_path = dag_executor.call_hook('ingress')
 
         # make sure we got the results we wanted
         self.assertEqual(
@@ -78,6 +79,11 @@ class TestBasic(unittest.TestCase):
 
         # ensure we went the path we expected
         self.assertEqual(
-            self.executor_path(dag_executor),
-            [('ingress', [1, 3, 4, 5])],
+            [x[0] for x in dag_executor.context.execution_path],
+            [('ingress', 1), ('ingress', 3), ('eventual_bool', 1), ('eventual_bool', 1), ('eventual_bool', 1), ('eventual_bool', 1), ('ingress', 4), ('ingress', 5)],
+        )
+
+        self.assertEqual(
+            self._condense_path(dag_path),
+            [1,3,4,5],
         )

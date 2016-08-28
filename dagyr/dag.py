@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 ARG_TYPES = {
     'string': str,
     'int': int,
+    'bool': bool,
     # since we are using immutable types, we need a more basic check for python
     'list': collections.Sequence,
     'dict': collections.Mapping,
@@ -86,11 +87,7 @@ class DagNode(object):
             resolved_args[arg_name] = context.options[arg_spec['global_option_data_key']][self.args[arg_name]]
             self.validate_arg_type(arg_spec, resolved_args[arg_name])
 
-        try:
-            context.node = self
-            return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
-        finally:
-            context.node = None
+        return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
 
     def get_child(self, key):
         '''Return the next node (if there is one)
@@ -108,6 +105,7 @@ class Dag(object):
     method for actually executing the DAG.
     '''
     def __init__(self, name, config, processing_node_types=None):
+        # TODO: rename to `key`
         self.name = name
         self.nodes = {}
 
@@ -140,14 +138,17 @@ class Dag(object):
                 all_nodes - used_nodes,
             ))
 
+    def __repr__(self):
+        return '%s: %s' % (self.__class__.__name__, self.name)
+
     def __call__(self, context):
         '''Execute the DAG with the given context
         '''
         try:
-            context.dag = self
+            context.execution_stack.append(self)
             node = self.starting_node
-            path = []
             # call the control_dag
+            path = []
             while True:
                 node_ret = node(context)
                 # TODO: decide what to do here when the child doesn't exist
@@ -156,11 +157,13 @@ class Dag(object):
                 # per processing_node
                 next_node = node.get_child(node_ret)
                 # TODO: change to namedtuple?
-                path.append({
+                step_ret = {
                     'node': node,
                     'node_ret': node_ret,
                     'next_node': next_node,
-                })
+                }
+                context.execution_path.append(((self.name, node.node_id), step_ret))
+                path.append(step_ret)
 
                 # if the node we executed has no children, we need to see if we
                 # should run another DAG, if not then we are all done
@@ -169,7 +172,7 @@ class Dag(object):
                 node = next_node
             return path
         finally:
-            context.dag = None
+            assert context.execution_stack.pop() == self
 
     @staticmethod
     def all_paths(node):
@@ -304,26 +307,5 @@ class DagExecutor(object):
             self.context.options = {}
 
         # TODO: check that we haven't run this hook before? at least warn about it?
-        dag_path = collections.OrderedDict()
-        self.hook_path_map[hook_name] = dag_path
 
-
-        while dag:
-            if dag.name in dag_path:
-                log.error("hook execution for {0} looping on dag {1}, path={2}".format(
-                    hook_name,
-                    dag.name,
-                    path=dag_path,
-                ))
-                # TODO: better exception?
-                raise Exception()
-            node_path = dag(self.context)
-            dag_path[dag.name] = node_path
-
-            # set the next DAG to run
-            if self.context.next_dag is not None:
-                dag = self.dag_config.dags[self.context.next_dag]
-                # TODO: consolidate into a step() method?
-                self.context.next_dag = None
-            else:
-                dag = None
+        return dag(self.context)

@@ -1,3 +1,4 @@
+import collections
 import pyrsistent
 import copy
 
@@ -15,11 +16,13 @@ class DagExecutionContext(object):
         # dotted notation
         self.dag_config = dag_config
 
-        # what DAG we are executing
-        self.dag = None
+        # this is exactly the execution path-- not used for loop detection
+        # etc. as it doesn't have sufficient context to do so
+        # list of ((dag_key, node_id), node_ret)
+        self.execution_path = []
 
-        # which node we are on
-        self.node = None
+        # stack of DAGs in execution (this is used for loop detection)
+        self.execution_stack = []
 
         # TODO: some sort of switching thing?? this is set on a per-hook basis,
         # only in here since we have the get_dotted stuff
@@ -30,9 +33,6 @@ class DagExecutionContext(object):
 
         # temporary storage space (attached to this execution context)
         self.tmp = {}
-
-        # if not None, this is the next DAG to run
-        self.next_dag = None
 
     def getattr_dotted(self, ident):
         '''Return the value for something in our namespace given dot notation
@@ -56,7 +56,7 @@ class DagExecutionContext(object):
         # TODO: put in some protected namespace? frozen.dag_config ??
         # some very VERY basic checking, attempting to not let the DAG set
         # immutable things
-        if ident_parts[0] in ('dag_config', 'options', 'dag', 'node'):
+        if ident_parts[0] in ('dag_config', 'options', 'dag', 'node', 'execution_path', 'execution_stack'):
             raise Exception('Not allowed to set those!!')
 
         thing = self

@@ -12,7 +12,9 @@ def processing_node(context, arg_spec, raw_args, resolved_args):
     '''
     for x in xrange(0, raw_args['iterate_limit']):
         # TODO: less messy... this is a bit convoluted
-        r = context.dag_config.processing_node_funcs[raw_args['processing_node_name']](context, {}, {} ,{})
+        dag_path = context.dag_config.dags[raw_args['dag_key']](context)
+        # TODO: do something with the path
+        r = dag_path[-1]['node_ret']
         if r == raw_args['expected_value']:
             return True
     return False

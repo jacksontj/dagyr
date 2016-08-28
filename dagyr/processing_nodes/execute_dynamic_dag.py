@@ -6,4 +6,4 @@ def processing_node(context, arg_spec, raw_args, resolved_args):
         resolved_args['dag_prefix'],
         context.getattr_dotted(resolved_args['suffix_key']),
     )
-    context.setattr_dotted('next_dag', key)
+    dag_path = context.dag_config.dags[key](context)

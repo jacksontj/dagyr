@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import dag_proxy.dag
 
 
-def dagconfig_to_graph(g, labels, node):
+def Dagyr_to_graph(g, labels, node):
     g.add_node(node)
     labels['nodes'][node] = (node.node_config['func'], node.args)
 
@@ -19,21 +19,21 @@ def dagconfig_to_graph(g, labels, node):
         g.add_edge(node, child, key=key)
         labels['edges'][(node, child)] = key
         # recurse!
-        dagconfig_to_graph(g, labels, child)
+        Dagyr_to_graph(g, labels, child)
 
 
 if __name__ == '__main__':
     print 'Creating a visualization of config %s' % sys.argv[1]
-    dag_config = dag_proxy.dag.DagConfig.from_file(sys.argv[1])
+    dag_config = dag_proxy.dag.Dagyr.from_file(sys.argv[1])
 
     control_g = nx.DiGraph()
     labels = {
         'edges': {},
         'nodes': {},
     }
-    dagconfig_to_graph(control_g, labels, dag_config.control_dag)
+    Dagyr_to_graph(control_g, labels, dag_config.control_dag)
 
-    # TODO: embed into DagConfig (or DAG class internally)
+    # TODO: embed into Dagyr (or DAG class internally)
     print nx.algorithms.is_directed_acyclic_graph(control_g)
 
 

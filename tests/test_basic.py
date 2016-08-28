@@ -6,7 +6,7 @@ import dagyr.dag
 class TestBasic(unittest.TestCase):
     def setUp(self):
         # TODO: helper method to load files
-        self.dagyr_config = dagyr.dag.DagConfig.from_file(
+        self.dagyr_config = dagyr.dag.Dagyr.from_file(
             '/home/jacksontj/src/dagyr/tests/files/basic.yaml',
         )
 

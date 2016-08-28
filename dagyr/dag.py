@@ -214,7 +214,7 @@ class Dag(object):
 
 # TODO rename to dag_set? or something like that, since its actually the whole config
 # holder of the whole DAG config
-class DagConfig(object):
+class Dagyr(object):
     '''Holder of configuration
 
     This is the top level object that contains all objects within the config file.
@@ -263,14 +263,14 @@ class DagConfig(object):
     def from_file(filepath):
         with open(filepath, 'r') as fh:
             cfg = yaml.load(fh)
-            return DagConfig(cfg)
+            return Dagyr(cfg)
 
     def get_executor(self, state):
         return DagExecutor(self, state)
 
 
 class DagExecutor(object):
-    '''This object is responsible for stepping a transaction through a DagConfig
+    '''This object is responsible for stepping a transaction through a Dagyr
     '''
     def __init__(self, dag_config, req_state):
         self.dag_config = dag_config

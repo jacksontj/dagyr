@@ -20,7 +20,3 @@
     - Config
         -- name and info are the same 99% of the time, we should probably make
             info optional and default to "name"
-
-    - restrict inlets
-        Each processing_node_type should be able to set limits on who is allowed
-        to connect in

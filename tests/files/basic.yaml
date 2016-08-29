@@ -21,6 +21,9 @@ processing_node_types:
     processing_function_type: attribute_match
   2:
     processing_function_type: execute_dynamic_dag
+    # limit which processing_node_types are allowed to connect in
+    allowed_incoming:
+        - 1
   3:
     processing_function_type: set_attribute
   4:

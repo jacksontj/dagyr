@@ -25,7 +25,8 @@ ARG_TYPES = {
 class DagNodeType(object):
     '''A node template for the DAG
     '''
-    def __init__(self, node_type_config, processing_function_types):
+    def __init__(self, key, node_type_config, processing_function_types):
+        self.key = key
         self.processing_function_type = processing_function_types[node_type_config['processing_function_type']]
 
         # this processing_node_type is based on the processing_function_type
@@ -59,6 +60,11 @@ class DagNodeType(object):
         if 'type' not in self.arg_spec[arg_name]:
             return True
         return isinstance(arg_val, ARG_TYPES[self.arg_spec[arg_name]['type']])
+
+    def allowed_incoming(self, other_node_type):
+        if 'allowed_incoming' not in self.node_type_config:
+            return True
+        return other_node_type.key in self.node_type_config['allowed_incoming']
 
 
 class DagNode(object):
@@ -96,7 +102,15 @@ class DagNode(object):
         '''
         self.children = {}
         for k, child_id in self.outlets.iteritems():
+            # check that the types are allowed to connect
+            if not nodes[child_id].node_type.allowed_incoming(self.node_type):
+                raise Exception('Dag {0} node {1} not allowed to connect to {2}'.format(
+                    self.dag_key,
+                    self.node_id,
+                    child_id,
+                ))
             self.children[k] = nodes[child_id]
+
 
     def __repr__(self):
         return str((self.dag_key, self.node_id))
@@ -256,7 +270,7 @@ class Dagyr(object):
 
         self.processing_node_types = {}
         for k, cfg in self.config['processing_node_types'].iteritems():
-            self.processing_node_types[k] = DagNodeType(cfg, self.processing_function_types)
+            self.processing_node_types[k] = DagNodeType(k, cfg, self.processing_function_types)
 
         self.dags = {}
         for dag_key, dag_meta in self.config['dags'].iteritems():

@@ -15,7 +15,8 @@
             - end node
             - end dag
 
-
+    - Support multiple inlets per processing_node
+        -- allowed_incoming should be able to specify which upstream node_type and outlet is allowed to connect to each inlet.
 
     - Config
         -- name and info are the same 99% of the time, we should probably make

@@ -7,7 +7,7 @@ import collections
 
 import state
 import conversion
-import processing_nodes
+import processing_function_types
 
 
 log = logging.getLogger(__name__)
@@ -25,11 +25,34 @@ ARG_TYPES = {
 class DagNodeType(object):
     '''A node template for the DAG
     '''
-    def __init__(self, node_type_config, funcs):
-        self.node_type_config = node_type_config
+    def __init__(self, node_type_config, processing_function_types):
+        self.processing_function_type = processing_function_types[node_type_config['processing_function_type']]
 
-        self.func = funcs[node_type_config['func']]
-        self.arg_spec = node_type_config['arg_spec']
+        # this processing_node_type is based on the processing_function_type
+        self.node_type_config = copy.deepcopy(self.processing_function_type)
+        # we then merge in our configuration on top
+        for k, v in node_type_config.iteritems():
+            if k in ('arg_spec', 'processing_function_type'):
+                continue
+            self.node_type_config[k] = v
+
+        self.arg_spec = self.node_type_config['arg_spec']
+
+        # merge the arg_spec
+        # we don't allow any new args to be defined, and types cannot be changed
+        # if they are defined in the processing_function_type
+        if 'arg_spec' in node_type_config:
+            # verify that we havent defined new args
+            if set(node_type_config['arg_spec']).issubset(set(self.arg_spec)) is not True:
+                raise Exception()
+            for arg_name, arg_dict in node_type_config['arg_spec'].iteritems():
+                for arg_spec_key, arg_spec_val in arg_dict.iteritems():
+                    if arg_spec_key == 'type' and 'type' in self.arg_spec[arg_name]:
+                        raise Exception()
+                    self.arg_spec[arg_name][arg_spec_key] = arg_spec_val
+
+        pyrsistent.freeze(self.node_type_config)
+        pyrsistent.freeze(self.arg_spec)
 
     def validate_arg_type(self, arg_name, arg_val):
         # if there is no type defined, we don't check anything
@@ -87,7 +110,7 @@ class DagNode(object):
             resolved_args[arg_name] = context.options[arg_spec['global_option_data_key']][self.args[arg_name]]
             self.node_type.validate_arg_type(arg_name, resolved_args[arg_name])
 
-        return self.node_type.func(context, self.node_type.arg_spec, self.args, resolved_args)
+        return self.node_type.processing_function_type['func'](context, self.node_type.arg_spec, self.args, resolved_args)
 
     def get_child(self, key):
         '''Return the next node (if there is one)
@@ -229,11 +252,11 @@ class Dagyr(object):
         self.config = pyrsistent.freeze(config)
 
         # TODO better names...
-        self.processing_node_funcs = processing_nodes.load()
+        self.processing_function_types = processing_function_types.load()
 
         self.processing_node_types = {}
         for k, cfg in self.config['processing_node_types'].iteritems():
-            self.processing_node_types[k] = DagNodeType(cfg, self.processing_node_funcs)
+            self.processing_node_types[k] = DagNodeType(cfg, self.processing_function_types)
 
         self.dags = {}
         for dag_key, dag_meta in self.config['dags'].iteritems():

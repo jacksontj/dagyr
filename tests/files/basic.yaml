@@ -14,113 +14,30 @@ global_option_data:
       success: 200
       notfound: 404
 
-# what types of processing_nodes -- effectively a template
+# what types of processing_nodes -- effectively a template on top of processing_function_type
+# these may augment the definition -- specifically the arg_spec, name, info, etc.
 processing_node_types:
   1:
-    name: 'attribute_match'
-    info: 'match an attribute against a set of values'
-    info_url: http://someplace.com
-    # this node_type has the effect of setting a "domain DAG name"
-    func: attribute_match
-    # this is what the args are, and potentially how to resolve them (look it up)
-    arg_spec:
-      # this is a thing that will be passed a key to lookup the value
-      attribute:
-        name: 'a readable name'
-        info: 'name of the attribute to match'
-        type: string
-      # this just gets a value-- just use it
-      values:
-        name: 'a readable name'
-        info: 'list of values to match against'
-        type: list  # TODO: define type of values?
+    processing_function_type: attribute_match
   2:
-    name: 'execute_dynamic_dag'
-    info: 'execute another dag'
-    func: execute_dynamic_dag
-    arg_spec:
-      # this is a thing that will be passed a key to lookup the value
-      dag_prefix:
-        name: 'a readable name'
-        info: 'string prefix'
-        type: string
-      # this just gets a value-- just use it
-      suffix_key:
-        name: 'a readable name'
-        info: 'list of values to match against'
-        type: string
+    processing_function_type: execute_dynamic_dag
   3:
-    name: 'set_attribute'
-    info: 'set an attribute'
-    func: set_attribute
-    arg_spec:
-      # this is a thing that will be passed a key to lookup the value
-      attribute:
-        name: 'a readable name'
-        info: 'name of the attribute to match'
-        type: string
-      # this just gets a value-- just use it
-      value:
-        name: 'what to set it to'
-        info: 'what value to set'
-        # TODO: any??
-        #type: string
+    processing_function_type: set_attribute
   4:
     name: 'set_status_code'
     info: 'set status code'
-    func: set_attribute
+    processing_function_type: set_attribute
     arg_spec:
-      # this is a thing that will be passed a key to lookup the value
-      attribute:
-        name: 'a readable name'
-        info: 'name of the attribute to match'
-        type: string
-      # this just gets a value-- just use it
       value:
-        name: 'what to set it to'
-        info: 'what value to set'
         type: int
         # key for all possible options, NOT a place to get the values from
         # for the node instance-- they live in the node instance as "args".
         # this means that the value you are passed will be a key to lookup in options
         global_option_data_key: response_codes
   5:
-    name: 'iterate_until'
-    info: 'iterate_until'
-    func: iterate
-    arg_spec:
-      # this is a thing that will be passed a key to lookup the value
-      dag_key:
-        name: 'key of DAG to run'
-        info: 'key of DAG to run'
-      iterate_limit:
-        name: max times we'll call
-        info: max times we'll call
-        type: int
-      expected_value:
-        name: what return we want
-        info: what return we want
-      # TODO: how to wrap the other processing_node_type's arguments :/
+    processing_function_type: iterate
   6:
-    name: eventual_bool
-    info: eventual_bool
-    func: eventual_bool
-    arg_spec:
-      counter_location:
-        name: where to store the counter
-        info: where to store the counter
-        type: string
-      starting_value:
-        name: starting_value
-        info: what value to start as
-        type: bool
-      eventual_value:
-        name: eventual_value
-        info: what value to end up as
-      change_count:
-        name: change count
-        info: what count to change at
-        type: int
+    processing_function_type: eventual_bool
 
 # TODO: add options for max_depth, etc. for DAG validation and execution
 # all the DAGs

@@ -20,3 +20,16 @@
     - Config
         -- name and info are the same 99% of the time, we should probably make
             info optional and default to "name"
+
+    - Add another layer -- processing_function_type (??)
+        right now we are node_types -> node_instances -> DAG
+        change to function_type -> node_types -> node_instances -> DAG
+
+        Since we want to allow multiple node_types to use the same function (different options, etc.)
+        we can simply pull most of the arg spec into a "function_type" layer
+
+    - restrict inlets
+        Each processing_node_type should be able to set limits on who is allowed
+        to connect in
+
+    - change call_hook to set the options back when done (context manager/ try-finally)

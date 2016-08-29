@@ -320,11 +320,15 @@ class DagExecutor(object):
         # name of the dag to run for the given hook
         hook_meta = self.dag_config.config['hook_dag_map'][hook_name]
         dag = self.dag_config.dags[hook_meta['dag_name']]
-        if 'global_option_data_key' in hook_meta:
-            self.context.options = self.dag_config.config['global_option_data'][hook_meta['global_option_data_key']]
-        else:
-            self.context.options = {}
+        try:
+            orig_options = self.context.options
+            if 'global_option_data_key' in hook_meta:
+                self.context.options = self.dag_config.config['global_option_data'][hook_meta['global_option_data_key']]
+            else:
+                self.context.options = {}
 
-        # TODO: check that we haven't run this hook before? at least warn about it?
+            # TODO: check that we haven't run this hook before? at least warn about it?
 
-        return dag(self.context)
+            return dag(self.context)
+        finally:
+            self.context.options = orig_options

@@ -24,5 +24,3 @@
     - restrict inlets
         Each processing_node_type should be able to set limits on who is allowed
         to connect in
-
-    - change call_hook to set the options back when done (context manager/ try-finally)

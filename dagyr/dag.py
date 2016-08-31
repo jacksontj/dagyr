@@ -29,6 +29,13 @@ class DagNodeType(object):
         self.key = key
         self.processing_function_type = processing_function_types[node_type_config['processing_function_type']]
 
+        # map of id -> metadatadict
+        # inlets can optionally have an "allowed_incoming" section-- to define
+        # what things are allowed to connect to the given inlet
+        self.inlets = node_type_config.get('inlets', {0: {}})
+        # map of id -> metdatadict
+        self.outlets = node_type_config.get('outlets', {0: {}})
+
         # this processing_node_type is based on the processing_function_type
         self.node_type_config = copy.deepcopy(self.processing_function_type)
         # we then merge in our configuration on top
@@ -61,10 +68,25 @@ class DagNodeType(object):
             return True
         return isinstance(arg_val, ARG_TYPES[self.arg_spec[arg_name]['type']])
 
-    def allowed_incoming(self, other_node_type):
-        if 'allowed_incoming' not in self.node_type_config:
+    # determine if the incoming DAG connection is allowed
+    # this is a combination of upstream (node_id, outlet_id) and our (node_id, inlet_id)
+    def allowed_incoming(self, other_node, other_outlet_id, inlet_id):
+        # if we are attempting to connect to an inlet that doesn't exist-- error
+        if inlet_id not in self.inlets:
+            raise Exception('Node {0}.{1} is attempting to connect to {3} -- invalid inlet'.format(
+                other_node.node_id,
+                other_outlet_id,
+                inlet_id,
+            ))
+
+        if 'allowed_incoming' not in self.inlets[inlet_id]:
             return True
-        return other_node_type.key in self.node_type_config['allowed_incoming']
+
+        # for all of the type_inlet_pairs-- see if we have a match
+        for incoming_type_id, incoming_outlet in self.inlets[inlet_id]['allowed_incoming']['type_inlet_pair']:
+            if incoming_type_id == other_node.node_type.key and ((incoming_outlet is None) or (incoming_outlet == other_outlet_id)):
+                return True
+        return False
 
 
 class DagNode(object):
@@ -101,23 +123,27 @@ class DagNode(object):
         '''called after all nodes are created to link them together
         '''
         self.children = {}
-        for k, child_id in self.outlets.iteritems():
+        for k, (outlet_id, inlet_id, child_id) in self.outlets.iteritems():
             # check that the types are allowed to connect
-            if not nodes[child_id].node_type.allowed_incoming(self.node_type):
-                raise Exception('Dag {0} node {1} not allowed to connect to {2}'.format(
+            if not nodes[child_id].node_type.allowed_incoming(self, outlet_id, inlet_id):
+                raise Exception('Dag {0} node {1}.{2} not allowed to connect to {3}.{4}'.format(
                     self.dag_key,
                     self.node_id,
+                    outlet_id,
                     child_id,
+                    inlet_id,
                 ))
-            self.children[k] = nodes[child_id]
+            self.children[k] = (nodes[child_id], inlet_id)
 
 
     def __repr__(self):
         return str((self.dag_key, self.node_id))
 
-    def __call__(self, context):
+    def __call__(self, context, inlet_id):
         '''Run the node and return
         '''
+        # TODO: pass this to the underlying function
+        print 'called on inlet_id', inlet_id
         resolved_args = dict(self.base_resolved_args)
         for arg_name in self.to_resolve_args:
             arg_spec = self.node_type.arg_spec[arg_name]
@@ -126,11 +152,12 @@ class DagNode(object):
 
         return self.node_type.processing_function_type['func'](context, self.node_type.arg_spec, self.args, resolved_args)
 
+    # return pair of (node, inlet_id)
     def get_child(self, key):
         '''Return the next node (if there is one)
         '''
         if not self.children:
-            return None
+            return None, None
         else:
             return self.children[key]
 
@@ -157,7 +184,8 @@ class Dag(object):
         # link the children together
         for n in self.nodes.itervalues():
             n.link_children(self.nodes)
-        self.starting_node = self.nodes[config['starting_node']]
+        starting_node_id, self.starting_node_inlet = config['starting_node']
+        self.starting_node = self.nodes[starting_node_id]
 
         # verify that the graph is acyclig (thereby making it a DAG)
         if not Dag.is_acyclic([], self.starting_node):
@@ -183,20 +211,23 @@ class Dag(object):
         try:
             context.execution_stack.append(self)
             node = self.starting_node
+            inlet_id = self.starting_node_inlet
             # call the control_dag
             path = []
             while True:
-                node_ret = node(context)
+                node_ret = node(context, inlet_id)
                 # TODO: decide what to do here when the child doesn't exist
                 # it'll throw a KeyError, and we can either assume execution
                 # ends or raise an exception-- we may want to make this configurable
                 # per processing_node
-                next_node = node.get_child(node_ret)
+                next_node, next_inlet_id = node.get_child(node_ret)
                 # TODO: change to namedtuple?
                 step_ret = {
                     'node': node,
+                    'node_inlet_id': inlet_id,
                     'node_ret': node_ret,
                     'next_node': next_node,
+                    'next_node_inlet_id': next_inlet_id,
                 }
                 context.execution_path.append(((self.key, node.node_id), step_ret))
                 path.append(step_ret)
@@ -206,6 +237,7 @@ class Dag(object):
                 if next_node is None:
                     break
                 node = next_node
+                inlet_id = next_inlet_id
             return path
         finally:
             assert context.execution_stack.pop() == self
@@ -219,7 +251,7 @@ class Dag(object):
             return [[node.node_id]]
 
         paths = []
-        for child in node.children.itervalues():
+        for child, _ in node.children.itervalues():
             for p in Dag.all_paths(child):
                 p.insert(0, node.node_id)
                 paths.append(p)
@@ -233,7 +265,7 @@ class Dag(object):
         if node in path:
             return False
         path.append(node)
-        for child in node.children.itervalues():
+        for child, _ in node.children.itervalues():
             ret &= Dag.is_acyclic(path, child)
         return ret
 
@@ -244,7 +276,7 @@ class Dag(object):
         if node_set is None:
             node_set = set()
         node_set.add(node.node_id)
-        for child in node.children.itervalues():
+        for child, _ in node.children.itervalues():
             Dag.dag_nodes(child, node_set=node_set)
         return node_set
 

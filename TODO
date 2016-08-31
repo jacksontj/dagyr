@@ -15,9 +15,16 @@
             - end node
             - end dag
 
-    - Support multiple inlets per processing_node
-        -- allowed_incoming should be able to specify which upstream node_type and outlet is allowed to connect to each inlet.
-
     - Config
         -- name and info are the same 99% of the time, we should probably make
             info optional and default to "name"
+
+Questions remaining for inlet/outlet refactor:
+    - should we require complete arg_spec definition in processing_node_type?
+        pros: consistent, don't have to "merge"-- just check compatibility
+        cons: duplicated data most of the time :/
+    - When processing_functions are called-- should we pass them inlet, outlet, or all?
+    - for inlets/outlets-- should they be required always (or default to singles with no restrictions)
+        simple simplicity vs. explicit tradeoff
+    - processing_node_instance-- the map is currently {return -> (outlet_id, inlet_id, node_id)}
+        Should this be a map? is this fine?

@@ -32,9 +32,9 @@ class DagNodeType(object):
         # map of id -> metadatadict
         # inlets can optionally have an "allowed_incoming" section-- to define
         # what things are allowed to connect to the given inlet
-        self.inlets = node_type_config.get('inlets', {0: {}})
-        # map of id -> metdatadict
-        self.outlets = node_type_config.get('outlets', {0: {}})
+        self.inlets = node_type_config['inlets']
+        # map of id -> metdatadict (name, returns)
+        self.outlets = node_type_config['outlets']
 
         # this processing_node_type is based on the processing_function_type
         self.node_type_config = copy.deepcopy(self.processing_function_type)
@@ -122,8 +122,9 @@ class DagNode(object):
     def link_children(self, nodes):
         '''called after all nodes are created to link them together
         '''
+        # map of return -> (child_id, inlet_id)
         self.children = {}
-        for k, (outlet_id, inlet_id, child_id) in self.outlets.iteritems():
+        for outlet_id, (child_id, inlet_id) in self.outlets.iteritems():
             # check that the types are allowed to connect
             if not nodes[child_id].node_type.allowed_incoming(self, outlet_id, inlet_id):
                 raise Exception('Dag {0} node {1}.{2} not allowed to connect to {3}.{4}'.format(
@@ -133,7 +134,8 @@ class DagNode(object):
                     child_id,
                     inlet_id,
                 ))
-            self.children[k] = (nodes[child_id], inlet_id)
+            for r in self.node_type.outlets[outlet_id]['returns']:
+                self.children[r] = (nodes[child_id], inlet_id)
 
 
     def __repr__(self):

@@ -19,12 +19,27 @@ global_option_data:
 processing_node_types:
   1:
     processing_function_type: attribute_match
+    inlets:
+      0:
+        name: '0th inlet'
+    outlets:
+      0:
+        name: '0th outlet true'
+        returns: [true]
+      1:
+        name: '1st outlet false'
+        returns: [false]
   2:
     processing_function_type: execute_dynamic_dag
-
+    inlets:
+      0:
+        name: '0th inlet'
+    outlets:
+      0:
+        name: '0th outlet- true'
+        returns: [true]
   3:
     processing_function_type: set_attribute
-    # if inlets/outlets aren't defined, we'll assume a 0 for both -- with empty meta
     # all of our inlets (with various metadata)
     inlets:
       0:
@@ -32,18 +47,16 @@ processing_node_types:
         # limit which processing_node_types are allowed to connect in
         # if allowed_incoming is not defined, we'll allow all things incoming
         allowed_incoming:
-          # pair of type_id, inlet
+          # pair of type_id, outlet_id
           type_inlet_pair:
-            - [1, 0]  # this means type 1, any outlet
-            - [3, null]  # this means type 3, outlet 1
+            - [1, 1]  # this means type 1, outlet 1
+            - [3, null]  # this means type 3, any outlet
       1:
         name: '1st inlet'
-    # our outlets (with various metadata)
     outlets:
       0:
         name: '0th outlet'
-      1:
-        name: '1st outlet'
+        returns: [true]
   4:
     name: 'set_status_code'
     info: 'set status code'
@@ -56,10 +69,31 @@ processing_node_types:
         # for the node instance-- they live in the node instance as "args".
         # this means that the value you are passed will be a key to lookup in options
         global_option_data_key: response_codes
+    inlets:
+      0:
+        name: '0th inlet'
+    outlets:
+      0:
+        name: '0th outlet'
+        returns: [true]
   5:
     processing_function_type: iterate
+    inlets:
+      0:
+        name: '0th inlet'
+    outlets:
+      0:
+        name: '0th outlet'
+        returns: [true]
   6:
     processing_function_type: eventual_bool
+    inlets:
+      0:
+        name: '0th inlet'
+    outlets:
+      0:
+        name: '0th outlet'
+        returns: [true]
 
 # TODO: add options for max_depth, etc. for DAG validation and execution
 # all the DAGs
@@ -78,10 +112,10 @@ dags:
             - a.com
             - b.com
         # TODO: map?
-        # map of return -> (outlet_id, inlet_id, node_id)
+        # map of outlet_id -> (node_id, inlet_id)
         outlets:
-          true: [0, 0, 2]
-          false: [0, 0, 3]
+          0: [2, 0]
+          1: [3, 0]
       2: # node instance
         type_id: 2
         args:
@@ -93,7 +127,7 @@ dags:
           attribute: state.response_body
           value: "not found!"
         outlets:
-          true: [0, 0, 4]
+          0: [4, 0]
       4:
         type_id: 5
         args:
@@ -101,7 +135,7 @@ dags:
           iterate_limit: 4
           expected_value: true
         outlets:
-          true: [0, 0, 5]
+          0: [5, 0]
       5:
         type_id: 4
         args:
@@ -129,7 +163,7 @@ dags:
           attribute: "state.response_body"
           value: "found!"
         outlets:
-          true: [0, 0, 2]
+          0: [2, 0]
       2:
         type_id: 3
         args:

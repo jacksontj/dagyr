@@ -82,8 +82,8 @@ class DagNodeType(object):
         if 'allowed_incoming' not in self.inlets[inlet_id]:
             return True
 
-        # for all of the type_inlet_pairs-- see if we have a match
-        for incoming_type_id, incoming_outlet in self.inlets[inlet_id]['allowed_incoming']['type_inlet_pair']:
+        # Ensure that these nodes are allowed to connect on the inlet/outlet pair
+        for incoming_type_id, incoming_outlet in self.inlets[inlet_id]['allowed_incoming']:
             if incoming_type_id == other_node.node_type.key and ((incoming_outlet is None) or (incoming_outlet == other_outlet_id)):
                 return True
         return False

@@ -5,7 +5,7 @@ with context and a set of arguments to return a result. That result will be used
 to traverse the DAG
 '''
 
-def example_function_type(context, arg_spec, raw_args, resolved_args):
+def example_function_type(context, node_context, arg_spec, raw_args, resolved_args):
     '''A processing_node
 
     Arguments:

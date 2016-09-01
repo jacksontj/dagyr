@@ -6,7 +6,7 @@ many times this node has been called will be stored in `counter_location`
 
 '''
 
-def eventual_bool(context, arg_spec, raw_args, resolved_args):
+def eventual_bool(context, node_context, arg_spec, raw_args, resolved_args):
     count = raw_args['starting_value']
     try:
         count = context.getattr_dotted(raw_args['counter_location'])

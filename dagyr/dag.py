@@ -144,15 +144,20 @@ class DagNode(object):
     def __call__(self, context, inlet_id):
         '''Run the node and return
         '''
-        # TODO: pass this to the underlying function
-        print 'called on inlet_id', inlet_id
         resolved_args = dict(self.base_resolved_args)
         for arg_name in self.to_resolve_args:
             arg_spec = self.node_type.arg_spec[arg_name]
             resolved_args[arg_name] = context.options[arg_spec['global_option_data_key']][self.args[arg_name]]
             self.node_type.validate_arg_type(arg_name, resolved_args[arg_name])
 
-        return self.node_type.processing_function_type['func'](context, self.node_type.arg_spec, self.args, resolved_args)
+        # actually call the processing_function_type
+        return self.node_type.processing_function_type['func'](
+            context,                    # DagExecutionContext (which includes user context
+            {'inlet_id': inlet_id},     # node_context
+            self.node_type.arg_spec,    # arg_spec
+            self.args,                  # args
+            resolved_args,              # resolved_args
+        )
 
     # return pair of (node, inlet_id)
     def get_child(self, key):

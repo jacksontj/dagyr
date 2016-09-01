@@ -2,7 +2,7 @@
 '''
 import logging
 
-def set_attribute(context, arg_spec, raw_args, resolved_args):
+def set_attribute(context, node_context, arg_spec, raw_args, resolved_args):
     try:
         context.setattr_dotted(resolved_args['attribute'], resolved_args['value'])
         return True

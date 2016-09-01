@@ -1,7 +1,7 @@
 '''Set the next DAG to execute
 '''
 
-def execute_dynamic_dag(context, arg_spec, raw_args, resolved_args):
+def execute_dynamic_dag(context, node_context, arg_spec, raw_args, resolved_args):
     key = '{0}_{1}'.format(
         resolved_args['dag_prefix'],
         context.getattr_dotted(resolved_args['suffix_key']),

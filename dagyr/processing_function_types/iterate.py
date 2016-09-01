@@ -1,7 +1,7 @@
 '''An example to repeatedly call a processing_node up to N times waiting for a specific return
 '''
 
-def iterate_until(context, arg_spec, raw_args, resolved_args):
+def iterate_until(context, node_context, arg_spec, raw_args, resolved_args):
     '''A processing_node
 
     Arguments:

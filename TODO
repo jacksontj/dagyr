@@ -15,10 +15,6 @@
             - end node
             - end dag
 
-    - Config
-        -- name and info are the same 99% of the time, we should probably make
-            info optional and default to "name"
-
 - make graph validation pluggable (delegate model)
     -- this will allow arbitrary graph execution
     -- pass either pointer to dag, or generator of nodes/edges? (TODO)

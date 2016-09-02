@@ -19,12 +19,11 @@
         -- name and info are the same 99% of the time, we should probably make
             info optional and default to "name"
 
-Questions remaining for inlet/outlet refactor:
-    - should we require complete arg_spec definition in processing_node_type?
-        pros: consistent, don't have to "merge"-- just check compatibility
-        cons: duplicated data most of the time :/
-    - When processing_functions are called-- should we pass them inlet, outlet, or all?
-    - for inlets/outlets-- should they be required always (or default to singles with no restrictions)
-        simple simplicity vs. explicit tradeoff
-    - processing_node_instance-- the map is currently {return -> (outlet_id, inlet_id, node_id)}
-        Should this be a map? is this fine?
+- make graph validation pluggable (delegate model)
+    -- this will allow arbitrary graph execution
+    -- pass either pointer to dag, or generator of nodes/edges? (TODO)
+- change processing_function_type to list the valid returns of a given function
+    -- warn if the processing_node_type doesn't account for all of them (maybe require that they specify it just going nowhere?)
+- change DAG cyclic validation (and path listing) to use the inlet/outlets
+- change "path" thing to include additional metadata (inlet_it, outlet_id, time, return, CPU cycles, etc.)
+- multiple "execution" types (trace/strict/etc.)
